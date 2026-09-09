@@ -8,7 +8,7 @@ create extension if not exists pgcrypto;      -- gen_random_uuid()
 
 -- Shared updated_at trigger -------------------------------------------------
 create or replace function set_updated_at() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 begin
   new.updated_at = now();
   return new;

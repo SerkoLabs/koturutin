@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Button, Card, Field, Screen, Spacer, Txt } from '@/ui/components';
 import { radius, spacing, useTheme } from '@/ui/theme';
 import { useAppState } from '@/state/AppState';
+import { scanForRiskPhrases } from '@/domain/safety/safety';
 
 const HOUR_CHOICES = [7, 8, 12, 17, 18, 19, 20, 22];
 
@@ -21,6 +22,12 @@ export default function Capture() {
 
   async function onConfirm() {
     if (!canConfirm || saving) return;
+    // Rule-based safety net (never an LLM): a risk phrase in the free-text fields diverts to the
+    // crisis flow before persisting any coaching state (spine §10; consistent with S-07).
+    if (scanForRiskPhrases(`${name} ${trigger} ${behavior}`).risk) {
+      router.replace('/safety');
+      return;
+    }
     setSaving(true);
     const r = await addArrivingHomeMoment({
       name: name.trim(),

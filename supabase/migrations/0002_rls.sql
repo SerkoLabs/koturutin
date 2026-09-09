@@ -88,6 +88,36 @@ grant select on public.experiment_library to authenticated;
 -- safety_events: no client access at all (backend inserts via service_role; founder/QA reads there)
 -- (RLS enabled with NO policies for authenticated/anon → all client access denied; no grants.)
 
+-- Server-side capture-consent gate (spine §21 R2/R6) ------------------------------------------
+-- The age(18+) + required health-processing consent gate must hold at the TRUST BOUNDARY, not
+-- only in the client UI: a valid JWT could otherwise insert its own special-category rows with
+-- consent false. Mirror the free_note pattern with a SECURITY DEFINER predicate + BEFORE INSERT
+-- triggers on every table that captures special-category data.
+create or replace function public.user_capture_allowed(uid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select age_confirmed_18 and consent_health_processing from public.users where id = uid),
+    false
+  );
+$$;
+
+create or replace function public.enforce_capture_consent() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.user_capture_allowed(new.user_id) then
+    raise exception 'capture requires age_confirmed_18 and consent_health_processing (spine R2/R6)';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_moments_capture_gate       before insert on public.moments       for each row execute function public.enforce_capture_consent();
+create trigger trg_routine_edges_capture_gate before insert on public.routine_edges for each row execute function public.enforce_capture_consent();
+create trigger trg_experiments_capture_gate   before insert on public.experiments   for each row execute function public.enforce_capture_consent();
+create trigger trg_attempts_capture_gate      before insert on public.attempts      for each row execute function public.enforce_capture_consent();
+create trigger trg_observations_capture_gate  before insert on public.observations  for each row execute function public.enforce_capture_consent();
+create trigger trg_outcomes_capture_gate      before insert on public.outcomes      for each row execute function public.enforce_capture_consent();
+
 -- free_note server-side barrier (defense in depth beyond the column grant) ---------------------
 create or replace function public.enforce_free_note_consent() returns trigger
 language plpgsql security definer set search_path = public as $$

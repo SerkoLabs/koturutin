@@ -27,6 +27,19 @@
   - `npm run lint` (expo lint): PASS.
   - `npx expo export -p android`: PASS — the app bundles for the Android target.
   - Device/emulator run + lock-screen notification preview: NOT run here (needs a device; TASK-370).
+- Independent security/privacy/safety review (2026-09-09): no P0. Safety/consent/lock-screen/RLS
+  logic verified correct. Actioned in this run:
+  - P1 (server-side capture-consent gate missing) — FIXED: added `user_capture_allowed()` +
+    BEFORE INSERT capture-gate triggers on all special-category tables (supabase/migrations/0002).
+  - P2 (inconclusive free_note deny test) — FIXED: the test now exercises the trigger in isolation
+    and adds a capture-gate deny case (supabase/tests/rls_allow_deny.sql).
+  - P3 (deep-link could reach loop writers; crisis scan only on outcome note; `set_updated_at`
+    search_path) — FIXED: added `(loop)/_layout.tsx` route guard + defensive gates in AppState;
+    extended the rule-based crisis scan to capture free-text; pinned the trigger search_path.
+  - **P2 (at-rest encryption / MASVS-STORAGE-1) — TRACKED as a PRE-BETA RELEASE BLOCKER:** the local
+    document is plaintext in AsyncStorage; move to encrypted storage (expo-secure-store + encrypted
+    SQLite/MMKV) behind the Store port before real user data / beta. Deferred within the slice per
+    the review; must land before Stage 14/15.
 - Blockers (real, external):
   - Supabase project + publishable/anon key (enables cloud sync, live auth, TASK-210 RLS e2e).
   - Android/iOS device or emulator (on-device run, notification lock-screen verification TASK-370).

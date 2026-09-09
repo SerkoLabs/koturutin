@@ -163,6 +163,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         return r;
       },
       openTransitionCard: async () => {
+        // Defense in depth: never capture without the consent/age gate (mirrors the route guard + DB gate).
+        if (!data.profile || !canEnterLoopPredicate(data.profile)) return null;
         if (!activeExperiment) return null;
         const attemptId = newId();
         const next = offerAttempt(data, {
@@ -179,6 +181,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         await persist(respondToAttempt(data, { attemptId, response, reason: reason ?? null, nowISO: nowISO() }));
       },
       saveOutcome: async (attemptId, scores) => {
+        if (!data.profile || !canEnterLoopPredicate(data.profile)) return;
         await persist(
           recordOutcome(data, {
             outcomeId: newId(),
