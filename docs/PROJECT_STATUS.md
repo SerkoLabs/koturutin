@@ -59,7 +59,7 @@
 - TASK-020 Test runner + harness — DONE (jest node; RLS harness authored in supabase/tests)
 - TASK-030 Env schema + validation — DONE (src/config/env.ts, .env.example)
 - TASK-040 Supabase config placeholders — DONE (guarded client; migrations authored)
-- TASK-050 CI baseline — PARTIAL (playbook-integrity CI green; a JS typecheck/lint/test CI is the next add)
+- TASK-050 CI baseline — DONE (.github/workflows/ci.yml: npm ci + typecheck + lint + test; playbook-integrity CI also green)
 - TASK-060 i18n intent-key catalog — DONE (src/i18n; TR authored, EN mirrored)
 - TASK-070 Router shells S-01…S-12 — PARTIAL (slice screens live: onboarding, loop, support)
 - TASK-080 Providers + state — DONE (src/state/AppState.tsx)
@@ -75,6 +75,15 @@
 - TASK-190 Transition card via deep-link, reveal-after-open — PARTIAL (in-app card done; notification tap deep-link pending device)
 - TASK-200 Log outcome + persist + risk-phrase diversion — DONE (outcome.tsx + model + safety scan)
 - TASK-210 Vertical-slice e2e against live backend + RLS asserts — BLOCKED (founder Supabase credentials)
+
+### Phase 4 (Stage 12) core features — in progress
+- F-003 Three-day observation (S-03) — DONE locally (src/app/(loop)/observe.tsx + model addObservation + tests)
+- F-008 Weekly learning summary (S-08) — DONE locally, rule-based/correlational, no LLM
+  (src/domain/summary/weekly.ts + tests; src/app/(loop)/week.tsx)
+- F-011 Privacy & data control (S-09) — PARTIAL (src/app/(settings)/settings.tsx: consent management,
+  language, client-side export via Share, health-consent withdrawal, delete-all-data/account). "Delete
+  AI memory" deferred until insights are persisted; cloud delete/export via Edge Function pending creds.
+- F-002 full narration / F-013 notification settings / F-014 WHO-5 — NEXT.
 
 ## Quality commands
 

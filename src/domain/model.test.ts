@@ -1,10 +1,13 @@
 import {
   addConfirmedMoment,
+  addObservation,
+  countObservations,
   createProfile,
   emptyAppData,
   getActiveExperiment,
   getOutcomeForAttempt,
   getPriorityMoment,
+  normalizeAppData,
   offerAttempt,
   recordOutcome,
   respondToAttempt,
@@ -135,6 +138,36 @@ describe('experiment selection + relationship-safety gate + single active', () =
     const activeCount = second.value.experiments.filter((e) => e.isActive && !e.deletedAt).length;
     expect(activeCount).toBe(1);
     expect(getActiveExperiment(second.value)?.id).toBe('x2');
+  });
+});
+
+describe('observations (F-003)', () => {
+  it('refuses to add an observation until the consent/age gate passes', () => {
+    const d = createProfile(emptyAppData(), { id: 'u1', language: 'tr', timezone: 'Europe/Istanbul', nowISO: NOW });
+    const r = addObservation(d, {
+      observationId: 'ob1', userId: 'u1', momentId: null, context: 'x', behavior: 'y', craving: 5, energy: 5, nowISO: NOW,
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it('appends an observation once consented', () => {
+    const r = addObservation(consented(), {
+      observationId: 'ob1', userId: 'u1', momentId: null, context: 'İşten dönüş', behavior: 'Sigara', craving: 7, energy: 4, nowISO: NOW,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(countObservations(r.value)).toBe(1);
+      expect(r.value.observations[0].craving).toBe(7);
+    }
+  });
+});
+
+describe('normalizeAppData (forward-compatible load)', () => {
+  it('backfills arrays missing from an older persisted document', () => {
+    const legacy = { version: 1, profile: null, moments: [], routineEdges: [], experiments: [], attempts: [], outcomes: [] };
+    const n = normalizeAppData(legacy as Partial<AppData>);
+    expect(n.observations).toEqual([]);
+    expect(n.version).toBe(2);
   });
 });
 

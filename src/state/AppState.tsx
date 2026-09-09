@@ -7,6 +7,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { canEnterLoop as canEnterLoopPredicate, loopBlockReason } from '@/domain/consent/consent';
 import {
   addConfirmedMoment,
+  addObservation,
+  countObservations,
   createProfile,
   emptyAppData,
   getActiveExperiment,
@@ -21,6 +23,7 @@ import {
   type Result,
 } from '@/domain/model';
 import { countWeeklyConsciousTransitions } from '@/domain/northstar/northstar';
+import { buildWeeklySummary, type WeeklySummary } from '@/domain/summary/weekly';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
 import type { AttemptResponse, Experiment, ExperimentLibraryEntry, IfThenPlan, Language, Moment } from '@/domain/types';
 import { AsyncStorageStore } from '@/data/async-store';
@@ -41,7 +44,16 @@ interface AppStateValue {
   priorityMoment: Moment | null;
   activeExperiment: Experiment | null;
   weeklyConsciousTransitions: number;
+  weeklySummary: WeeklySummary;
+  observationCount: number;
   // actions
+  addObservationCheckin: (input: {
+    context: string | null;
+    behavior: string | null;
+    craving: number | null;
+    energy: number | null;
+  }) => Promise<Result<AppData>>;
+  deleteAllData: () => Promise<void>;
   setLanguage: (lang: Language) => Promise<void>;
   grantConsent: (patch: ConsentPatch) => Promise<void>;
   addArrivingHomeMoment: (input: {
@@ -118,6 +130,33 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       priorityMoment,
       activeExperiment,
       weeklyConsciousTransitions: countWeeklyConsciousTransitions(data.attempts, nowISO()),
+      weeklySummary: buildWeeklySummary(data, nowISO()),
+      observationCount: countObservations(data),
+
+      addObservationCheckin: async (input) => {
+        const r = addObservation(data, {
+          observationId: newId(),
+          userId,
+          momentId: priorityMoment?.id ?? null,
+          context: input.context,
+          behavior: input.behavior,
+          craving: input.craving,
+          energy: input.energy,
+          nowISO: nowISO(),
+        });
+        if (r.ok) await persist(r.value);
+        return r;
+      },
+      deleteAllData: async () => {
+        await store.clear();
+        const fresh = createProfile(emptyAppData(), {
+          id: newId(),
+          language,
+          timezone: data.profile?.timezone ?? 'Europe/Istanbul',
+          nowISO: nowISO(),
+        });
+        await persist(fresh);
+      },
 
       setLanguage: async (lang) => {
         await persist(updateProfile(data, { language: lang }, nowISO()));

@@ -161,6 +161,21 @@ export interface Outcome {
   deletedAt: string | null;
 }
 
+/** The 3-day observation check-ins (spine §5, §3 step 2; F-003). All Sensitive. */
+export interface Observation {
+  id: string;
+  userId: string;
+  momentId: string | null;
+  context: string | null;
+  behavior: string | null;
+  craving: number | null; // 0–10
+  energy: number | null; // 0–10
+  capturedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 /** Curated, read-only reference content (spine §5/§8). NOT user data. */
 export interface ExperimentLibraryEntry {
   id: string;

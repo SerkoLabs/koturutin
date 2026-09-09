@@ -1,41 +1,8 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Card, Divider, Screen, Spacer, Txt } from '@/ui/components';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { Button, Card, Divider, Screen, Spacer, Toggle, Txt } from '@/ui/components';
 import { useAppState } from '@/state/AppState';
 import type { MessageKey } from '@/i18n';
-
-function Toggle({ label, value, onToggle }: { label: string; value: boolean; onToggle: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={onToggle}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm }}
-    >
-      <View
-        style={{
-          width: 26,
-          height: 26,
-          borderRadius: radius.sm,
-          borderWidth: 2,
-          borderColor: value ? colors.accent : colors.border,
-          backgroundColor: value ? colors.accent : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {value ? <Txt variant="label">{''}</Txt> : null}
-        {value ? <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.accentText }} /> : null}
-      </View>
-      <View style={{ flex: 1 }}>
-        <Txt variant="body">{label}</Txt>
-      </View>
-    </Pressable>
-  );
-}
 
 export default function Consent() {
   const router = useRouter();

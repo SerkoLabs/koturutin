@@ -111,11 +111,53 @@ export const tr = {
     'Bir temas önerisi baskı ya da güvenlik kaygısı yaratıyorsa bunu önermeyiz. Güvende değilsen, güvendiğin bir kişiye ya da yerel destek hatlarına ulaşmayı düşünebilirsin.',
   'support.back': 'Geri dön',
 
+  // Observation check-in (S-03)
+  'observe.title': 'Kısa gözlem',
+  'observe.body': 'On saniyelik bir yoklama. Reçete yok, sadece fark etme.',
+  'observe.context.label': 'Şu an bağlam (kısa)',
+  'observe.context.placeholder': 'İşten yeni geldim',
+  'observe.behavior.label': 'Ne yapıyorsun?',
+  'observe.behavior.placeholder': 'Balkona çıkıyorum',
+  'observe.craving': 'İstek',
+  'observe.energy': 'Enerji',
+  'observe.save': 'Gözlemi kaydet',
+  'observe.saved': 'Kaydedildi. Birkaç gözlem, haritanı netleştirir.',
+  'home.observe.cta': 'Kısa gözlem ekle',
+
+  // Weekly review (S-08)
+  'week.title': 'Bu hafta',
+  'week.body': 'Bir yargı değil, birlikte bir bakış. Korelasyon gösteririz, nedensellik değil.',
+  'week.chose': 'Beş benzer anın gibi düşün: bu hafta {m} teklifin {n} tanesinde seçtiğin alternatifi yaptın.',
+  'week.connection': 'Yaptığın anlarda bağ hissi ortalaması: {v}/10.',
+  'week.craving': 'Yaptığın anlarda istek ortalaması: {v}/10.',
+  'week.none': 'Bu hafta henüz bir deneme yok. Hazır olduğunda küçük bir an dene.',
+  'week.next': 'Sıradaki küçük adımı sen seçersin; sistem sana dayatmaz.',
+  'home.week.cta': 'Haftayı gör',
+
+  // Settings & privacy (S-09)
+  'settings.title': 'Ayarlar ve gizlilik',
+  'settings.language': 'Dil',
+  'settings.language.tr': 'Türkçe',
+  'settings.language.en': 'English',
+  'settings.consents.title': 'İzinler',
+  'settings.health.on': 'Sağlık verisi işleme izni: açık',
+  'settings.health.withdraw': 'Sağlık verisi iznini geri çek (döngü durur)',
+  'settings.export': 'Verimi dışa aktar',
+  'settings.export.title': 'koturutin veri dışa aktarımı',
+  'settings.deleteMemory': 'Yapay zekâ hafızasını sil',
+  'settings.deleteMemory.done': 'Yapay zekâ hafızası temizlendi.',
+  'settings.deleteAccount': 'Hesabımı ve tüm verimi sil',
+  'settings.deleteAccount.help': 'Bu işlem cihazındaki tüm verini kalıcı olarak siler ve başa döner.',
+  'settings.deleteAccount.confirm': 'Evet, her şeyi sil',
+  'settings.back': 'Geri',
+  'home.settings.cta': 'Ayarlar ve gizlilik',
+
   // Generic
   'common.continue': 'Devam',
   'common.back': 'Geri',
   'common.notNow': 'Şimdi değil',
   'common.localOnly': 'Yalnızca bu cihazda',
+  'common.cancel': 'Vazgeç',
 } as const;
 
 export const en: Record<MessageKey, string> = {
@@ -212,10 +254,49 @@ export const en: Record<MessageKey, string> = {
     'If a contact suggestion creates pressure or a safety concern, we won’t suggest it. If you’re not safe, consider reaching someone you trust or a local support line.',
   'support.back': 'Go back',
 
+  'observe.title': 'Quick observation',
+  'observe.body': 'A ten-second check-in. No prescription, just noticing.',
+  'observe.context.label': 'Context right now (short)',
+  'observe.context.placeholder': 'Just got home from work',
+  'observe.behavior.label': 'What are you doing?',
+  'observe.behavior.placeholder': 'Heading to the balcony',
+  'observe.craving': 'Craving',
+  'observe.energy': 'Energy',
+  'observe.save': 'Save observation',
+  'observe.saved': 'Saved. A few observations sharpen your map.',
+  'home.observe.cta': 'Add a quick observation',
+
+  'week.title': 'This week',
+  'week.body': 'Not a verdict — a look together. We show correlation, never causation.',
+  'week.chose': 'Think of it like five similar moments: this week you did your alternative in {n} of {m} offers.',
+  'week.connection': 'Average sense of connection on the moments you did: {v}/10.',
+  'week.craving': 'Average craving on the moments you did: {v}/10.',
+  'week.none': 'No attempts yet this week. Try a small moment when you\'re ready.',
+  'week.next': 'You choose the next small step; the system never imposes it.',
+  'home.week.cta': 'See the week',
+
+  'settings.title': 'Settings & privacy',
+  'settings.language': 'Language',
+  'settings.language.tr': 'Türkçe',
+  'settings.language.en': 'English',
+  'settings.consents.title': 'Consents',
+  'settings.health.on': 'Health-data processing consent: on',
+  'settings.health.withdraw': 'Withdraw health-data consent (stops the loop)',
+  'settings.export': 'Export my data',
+  'settings.export.title': 'koturutin data export',
+  'settings.deleteMemory': 'Delete AI memory',
+  'settings.deleteMemory.done': 'AI memory cleared.',
+  'settings.deleteAccount': 'Delete my account and all data',
+  'settings.deleteAccount.help': 'This permanently deletes all data on your device and returns to the start.',
+  'settings.deleteAccount.confirm': 'Yes, delete everything',
+  'settings.back': 'Back',
+  'home.settings.cta': 'Settings & privacy',
+
   'common.continue': 'Continue',
   'common.back': 'Back',
   'common.notNow': 'Not now',
   'common.localOnly': 'On this device only',
+  'common.cancel': 'Cancel',
 };
 
 export const catalogs: Record<Language, Record<MessageKey, string>> = { tr, en };

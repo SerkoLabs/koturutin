@@ -17,12 +17,13 @@ import type {
   IfThenPlan,
   Language,
   Moment,
+  Observation,
   Outcome,
   RoutineEdge,
   UserProfile,
 } from '@/domain/types';
 
-export const APP_DATA_VERSION = 1;
+export const APP_DATA_VERSION = 2;
 
 export interface AppData {
   version: number;
@@ -32,6 +33,7 @@ export interface AppData {
   experiments: Experiment[];
   attempts: Attempt[];
   outcomes: Outcome[];
+  observations: Observation[];
 }
 
 export function emptyAppData(): AppData {
@@ -43,6 +45,28 @@ export function emptyAppData(): AppData {
     experiments: [],
     attempts: [],
     outcomes: [],
+    observations: [],
+  };
+}
+
+/**
+ * Bring a persisted document up to the current shape without wiping local data (forward-compatible
+ * load). Backfills arrays added in later versions and stamps the current version.
+ */
+export function normalizeAppData(raw: Partial<AppData> | null | undefined): AppData {
+  const base = emptyAppData();
+  if (!raw) return base;
+  return {
+    ...base,
+    ...raw,
+    version: APP_DATA_VERSION,
+    moments: raw.moments ?? [],
+    routineEdges: raw.routineEdges ?? [],
+    experiments: raw.experiments ?? [],
+    attempts: raw.attempts ?? [],
+    outcomes: raw.outcomes ?? [],
+    observations: raw.observations ?? [],
+    profile: raw.profile ?? null,
   };
 }
 
@@ -190,6 +214,46 @@ export function addConfirmedMoment(
 
 export function getPriorityMoment(data: AppData): Moment | null {
   return data.moments.find((m) => m.isPriority && !m.deletedAt) ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Observations — the 3-day check-ins (F-003, S-03). Gated: no capture without consent.
+// ---------------------------------------------------------------------------
+
+export function addObservation(
+  data: AppData,
+  args: {
+    observationId: string;
+    userId: string;
+    momentId: string | null;
+    context: string | null;
+    behavior: string | null;
+    craving: number | null;
+    energy: number | null;
+    nowISO: string;
+  },
+): Result<AppData> {
+  if (!data.profile || !canEnterLoop(data.profile)) {
+    return { ok: false, reason: 'loop_locked' };
+  }
+  const observation: Observation = {
+    id: args.observationId,
+    userId: args.userId,
+    momentId: args.momentId,
+    context: args.context,
+    behavior: args.behavior,
+    craving: args.craving,
+    energy: args.energy,
+    capturedAt: args.nowISO,
+    createdAt: args.nowISO,
+    updatedAt: args.nowISO,
+    deletedAt: null,
+  };
+  return { ok: true, value: { ...data, observations: [...data.observations, observation] } };
+}
+
+export function countObservations(data: AppData): number {
+  return data.observations.filter((o) => !o.deletedAt).length;
 }
 
 // ---------------------------------------------------------------------------

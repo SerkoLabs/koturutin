@@ -13,19 +13,19 @@
  * Store port before any real user data / beta. Tracked in docs/PROJECT_STATUS.md.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { APP_DATA_VERSION, type AppData } from '@/domain/model';
+import { normalizeAppData, type AppData } from '@/domain/model';
 import type { Store } from './store';
 
-const KEY = `koturutin.appdata.v${APP_DATA_VERSION}`;
+// Stable key across versions; normalizeAppData handles forward migration so local data is not lost.
+const KEY = 'koturutin.appdata';
 
 export class AsyncStorageStore implements Store {
   async load(): Promise<AppData | null> {
     try {
       const raw = await AsyncStorage.getItem(KEY);
       if (!raw) return null;
-      const parsed = JSON.parse(raw) as AppData;
-      if (parsed.version !== APP_DATA_VERSION) return null; // future: migrate
-      return parsed;
+      const parsed = JSON.parse(raw) as Partial<AppData>;
+      return normalizeAppData(parsed);
     } catch {
       // Corrupt/unreadable local data must not crash the app; start fresh.
       return null;

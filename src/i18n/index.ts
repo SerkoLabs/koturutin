@@ -23,6 +23,15 @@ export function translate(language: Language, key: MessageKey): string {
   return catalogs[language][key] ?? catalogs.tr[key] ?? key;
 }
 
+/** translate + {placeholder} interpolation, e.g. format(lang, 'week.chose', { n: 3, m: 5 }). */
+export function format(language: Language, key: MessageKey, params: Record<string, string | number>): string {
+  let s = translate(language, key);
+  for (const [k, v] of Object.entries(params)) {
+    s = s.split(`{${k}}`).join(String(v));
+  }
+  return s;
+}
+
 export type TFunction = (key: MessageKey) => string;
 
 export function makeT(language: Language): TFunction {

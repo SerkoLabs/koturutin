@@ -162,6 +162,38 @@ export function Scale({ label, value, onChange }: { label: string; value: number
   );
 }
 
+/** A calm checkbox-style toggle row (used for consents/settings). */
+export function Toggle({ label, value, onToggle }: { label: string; value: boolean; onToggle: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onToggle}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm, minHeight: 44 }}
+    >
+      <View
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: radius.sm,
+          borderWidth: 2,
+          borderColor: value ? colors.accent : colors.border,
+          backgroundColor: value ? colors.accent : 'transparent',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {value ? <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.accentText }} /> : null}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Txt variant="body">{label}</Txt>
+      </View>
+    </Pressable>
+  );
+}
+
 export function Divider() {
   const { colors } = useTheme();
   return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.sm }} />;
