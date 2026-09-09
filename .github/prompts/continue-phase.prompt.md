@@ -1,0 +1,1 @@
+Read `AGENTS.md`, `docs/AI_DEVELOPMENT_PLAYBOOK.md`, `docs/PROJECT_STATUS.md` and repository evidence. Continue only the next eligible lifecycle stage or implementation task. Enforce its gate, verify work, update status, and stop at the next required boundary.
