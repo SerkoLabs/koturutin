@@ -4,54 +4,81 @@
 
 - Lifecycle version: 1.1
 - Project: koturutin — bilingual contextual routine lab (Expo + React Native + Supabase)
-- Mode: Controlled (validate-first gate held)
-- Current lifecycle stage: 07 — IMPLEMENTATION_PLAN drafted; planning Stages 02–07 complete as drafts
-- Current implementation phase: N/A (no application code yet — correct per Stage 07 gate)
-- Current task: N/A
-- Gate status: Stages 02–07 documents drafted and cross-reviewed. **HELD**: pre-code validation gate
-  (docs/VALIDATION_PLAN.md, ADR-006) must be cleared before Stage 08 implementation begins.
-- Last audit: Planning-doc critique pass (product fidelity, playbook conformance, safety/privacy,
-  cross-consistency) — see PR description / AI review notes.
-- Blockers:
-  - Discovery/validation not yet executed (four critical assumptions unconfirmed).
-  - Founder-owned assets not yet provided: Supabase project + keys, Apple/Google developer accounts,
-    signing certificates (needed at Stages 08 and 14, not now).
-- Decisions requiring human input (stop conditions before Stage 08):
-  - Approve proceeding past the validation gate (or confirm validation outcomes).
-  - Any product-scope, business-model, or medical-claim change.
-  - Provisioning credentials/paid accounts; any external spend; public release/submission.
-- Next eligible action: Execute docs/VALIDATION_PLAN.md (problem interviews → founder diary →
-  concierge pilot → clickable prototype). Do NOT let a coding agent write application code before
-  the validation exit criteria are met. When cleared, run: "Read AGENTS.md and continue the lifecycle
-  for this repository. Do not skip gates." to enter Stage 08.
+- Mode: Controlled — engineering underway (ADR-010); external validation gate still open (ADR-006)
+- Current lifecycle stage: 10 — first vertical slice implemented (local-first); Stages 08–09 complete
+- Current implementation phase: Phase 3 (first vertical slice) — local-first path complete;
+  live-Supabase e2e (TASK-210) blocked on founder credentials
+- Current task: Audit #1 (Stage 11) is the next gate for the slice
+- Gate status:
+  - Planning Stages 02–07: PASS (documents drafted + cross-reviewed; PR #1).
+  - Stage 08 Foundation: PASS — Expo SDK 57 + RN 0.76-line + TypeScript strict scaffold; ESLint
+    (eslint-config-expo), Jest (node), env validation, i18n intent-key catalog, design primitives.
+  - Stage 09 App shell: PASS — Expo Router navigation, providers, onboarding + loop + support routes.
+  - Stage 10 First vertical slice: PARTIAL — the arriving-home loop runs end-to-end on-device with
+    real persistence across restart, the rule-based decision engine, the relationship-safety gate,
+    the consent/age gate, and the rule-based crisis diversion. The live-backend e2e + RLS assertions
+    (TASK-210) are HELD on founder Supabase credentials.
+  - **Validation gate (ADR-006): OPEN.** The pre-code discovery (four critical assumptions) is NOT
+    done and NOT fabricated; it remains required before beta (Stage 15). See docs/VALIDATION_PLAN.md.
+- Verification (this run):
+  - `npm run typecheck` (tsc --noEmit): PASS.
+  - `npm test` (jest): PASS — 6 suites, 36 tests (decision engine, safety gate + crisis matcher,
+    consent/age gate, North Star, app-data model, local-first persistence round-trip).
+  - `npm run lint` (expo lint): PASS.
+  - `npx expo export -p android`: PASS — the app bundles for the Android target.
+  - Device/emulator run + lock-screen notification preview: NOT run here (needs a device; TASK-370).
+- Blockers (real, external):
+  - Supabase project + publishable/anon key (enables cloud sync, live auth, TASK-210 RLS e2e).
+  - Android/iOS device or emulator (on-device run, notification lock-screen verification TASK-370).
+  - Apple/Google developer accounts + signing (Stage 14 release; not needed now).
+  - Discovery/validation evidence (ADR-006) before beta.
+- Decisions requiring human input (stop conditions): provisioning credentials/paid accounts; any
+  product-scope/business-model/medical-claim change; public release/submission; approving beta before
+  validation.
+- Next eligible action: run Audit #1 (Stage 11) on the slice, then continue Phase 4 breadth
+  (full F-002 narration + F-003 observation + F-008 weekly summary), authoring per-feature i18n and
+  safety copy for review. Wire the Supabase SyncingStore + TASK-210 when credentials arrive.
 
-## Planning artifacts (source of truth)
+## Implementation status by task (Phase 0–3)
 
-- README.md — product promise, user, MVP, non-goals, success metric.
-- docs/PRODUCT_SPEC.md — feature specs F-001…F-014 with acceptance criteria.
-- docs/USER_FLOWS.md — screens S-01…S-12, flows UF-001…UF-014.
-- docs/ARCHITECTURE.md — Expo + Supabase, rule-based decision engine, AI boundary, security/privacy.
-- docs/DATABASE.md — entities, owner-only RLS, retention, experiment_library seed, allow/deny tests.
-- docs/IMPLEMENTATION_PLAN.md — phases 0–9, first vertical slice explicit.
-- docs/VALIDATION_PLAN.md — pre-code validation (hard gate, ADR-006).
-- BUILD_PLAN.md — founder-facing master plan (Turkish).
-- docs/DECISIONS.md — ADR-001…ADR-009.
+- TASK-000 Expo+TS strict scaffold — DONE
+- TASK-010 Lint/format/module boundaries — DONE (eslint-config-expo)
+- TASK-020 Test runner + harness — DONE (jest node; RLS harness authored in supabase/tests)
+- TASK-030 Env schema + validation — DONE (src/config/env.ts, .env.example)
+- TASK-040 Supabase config placeholders — DONE (guarded client; migrations authored)
+- TASK-050 CI baseline — PARTIAL (playbook-integrity CI green; a JS typecheck/lint/test CI is the next add)
+- TASK-060 i18n intent-key catalog — DONE (src/i18n; TR authored, EN mirrored)
+- TASK-070 Router shells S-01…S-12 — PARTIAL (slice screens live: onboarding, loop, support)
+- TASK-080 Providers + state — DONE (src/state/AppState.tsx)
+- TASK-090 Loading/empty/error boundaries — PARTIAL (loading + gate states; broader boundaries in Phase 4)
+- TASK-100 Auth gate + safety-override hook — PARTIAL (consent/age gate live; Supabase auth pending creds)
+- TASK-120 users row + consent flags + first-run — DONE locally (model + onboarding); migration authored
+- TASK-130 Typed data layer boundary — DONE (src/data)
+- TASK-140 Slice migration + owner-only RLS + free_note barrier — DONE (supabase/migrations 0001/0002)
+- TASK-150 Seed experiment_library — DONE (src/data/library-seed.ts + migration 0003)
+- TASK-160 Create+confirm arriving-home moment — DONE (src/app/(loop)/capture.tsx + model)
+- TASK-170 Select experiment + relationship-safety gate — DONE (select.tsx + domain/safety + model)
+- TASK-180 Decision rule + right-moment notification — DONE (pure engine tested; notifications adapter; device send pending)
+- TASK-190 Transition card via deep-link, reveal-after-open — PARTIAL (in-app card done; notification tap deep-link pending device)
+- TASK-200 Log outcome + persist + risk-phrase diversion — DONE (outcome.tsx + model + safety scan)
+- TASK-210 Vertical-slice e2e against live backend + RLS asserts — BLOCKED (founder Supabase credentials)
 
 ## Quality commands
 
-Populate after tooling is chosen in Stage 08 (Expo + Supabase).
-
-- install:
-- dev:
-- lint:
-- typecheck:
-- test:
-- build:
-- e2e:
-- database tests:
+- install: `npm ci`
+- dev: `npx expo start`
+- lint: `npm run lint`
+- typecheck: `npm run typecheck`
+- test: `npm test`
+- build (bundle check): `npx expo export -p android`
+- e2e: pending live Supabase (TASK-210)
+- database tests: `supabase/tests/rls_allow_deny.sql` (run against a branch DB after `supabase db push`)
 
 ## Changelog
 
-- 2026-09-09 — Installed the AI App Development Playbook OS into koturutin; drafted planning Stages
-  02–07 plus VALIDATION_PLAN and the Turkish BUILD_PLAN; seeded ADR-001…ADR-009; set the validate-first
-  gate before Stage 08.
+- 2026-09-09 — Planning Stages 02–07 drafted; playbook OS installed; ADR-001…ADR-009; PR #1.
+- 2026-09-09 — Founder authorized engineering (ADR-010); built the local-first first vertical slice
+  (Stages 08–10): Expo+TS strict, rule-based decision engine, relationship-safety gate, consent/age
+  gate, rule-based crisis diversion, North Star count, on-device persistence; Supabase schema + RLS +
+  free_note barrier + seed authored (ADR-011). typecheck/lint/jest green; Android bundle exports.
+  Validation gate (ADR-006) kept open; TASK-210 held on credentials.

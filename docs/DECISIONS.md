@@ -132,3 +132,39 @@ Record material product/architecture decisions. Do not log trivial code choices.
 - Consequences: gate reviews are explicit, independent passes; routing intent (cheap routine work,
   strong independent gates) is preserved.
 - Revisit trigger: the founder chooses a different implementation toolchain.
+
+### ADR-010 — Begin engineering (Stage 08+) in parallel with the validation gate still open
+- Status: Accepted
+- Date: 2026-09-09
+- Context: ADR-006 set a validate-first gate (docs/VALIDATION_PLAN.md) before Stage 08. The founder
+  (the user) then explicitly authorized building a runnable first vertical slice now, while asking
+  that the external validation requirement NOT be fabricated. AGENTS.md §0 ranks an explicit user
+  instruction above the self-imposed gate.
+- Decision: Proceed into Stages 08–10 to build the first vertical slice. The pre-code validation
+  (four critical assumptions; problem interviews → concierge pilot → clickable prototype) remains a
+  REAL, unmet gate that stays required before beta/launch (Stage 15) — it is not marked complete and
+  no validation evidence is invented.
+- Alternatives considered: hold all code until validation completes (rejected — founder authorized
+  parallel engineering); silently treat validation as done (rejected — dishonest, unsafe).
+- Consequences: PROJECT_STATUS tracks engineering progress AND keeps the validation gate open as a
+  blocker to beta; VALIDATION_PLAN is preserved verbatim.
+- Revisit trigger: validation completes (unblocks beta), or the founder pauses engineering.
+
+### ADR-011 — Local-first-first vertical slice; Supabase authored but deferred to credentials
+- Status: Accepted
+- Date: 2026-09-09
+- Context: The vertical slice must be genuinely runnable now, but a live Supabase project needs
+  founder-owned credentials (a stop condition). The architecture is already local-first for sensitive
+  data (ADR-004).
+- Decision: Implement the whole loop against an on-device store (AsyncStorage) behind a `Store` port,
+  so the slice runs and persists across restart with no backend. Author the real Supabase schema,
+  RLS, grants, the free_note barrier and seed as migrations (supabase/migrations), plus a guarded
+  client and the allow/deny test script — but do NOT present a live backend as wired. Auth-against-a-
+  live-project and the end-to-end RLS assertions (TASK-210) stay blocked on credentials.
+- Alternatives considered: SQLite for the local store now (deferred — the Store port makes swapping
+  trivial later; ARCHITECTURE §11 still names SQLite as the target engine); mock a fake backend
+  (rejected — AGENTS.md §8 forbids passing mocks off as finished integration).
+- Consequences: a real, testable, runnable slice today; a clean path to enable cloud sync by
+  implementing a SyncingStore over the same port once credentials exist.
+- Revisit trigger: founder provisions Supabase (wire the SyncingStore + run TASK-210); or a hard
+  requirement forces the local engine to SQLite sooner.
