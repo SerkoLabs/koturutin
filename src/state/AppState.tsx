@@ -31,12 +31,16 @@ import { decideNotification } from '@/domain/decision-engine/engine';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
 import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome } from '@/domain/types';
 import { AsyncStorageStore } from '@/data/async-store';
+import { SyncingStore } from '@/data/syncing-store';
+import { SupabaseRemoteGateway } from '@/data/supabase/gateway';
 import { scheduleTransitionReminder } from '@/notifications';
 import { detectLanguage, makeT, type TFunction } from '@/i18n';
 import { localDayOfWeek, localMinuteOfDay, newId, nowISO } from '@/lib/ids';
-import type { Store } from '@/data/store';
 
-const store: Store = new AsyncStorageStore();
+// Local-first: on-device storage is the primary source of truth. The SyncingStore wraps it and,
+// ONLY when a session + the isolated `koturutin` schema are available (founder prerequisites),
+// mirrors rows to Postgres under RLS. Until then sync() skips and behaviour is pure-local (ADR-004/012).
+const store = new SyncingStore(new AsyncStorageStore(), new SupabaseRemoteGateway());
 
 interface AppStateValue {
   loading: boolean;
@@ -110,6 +114,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setData(fresh);
       }
       if (!cancelled) setLoading(false);
+
+      // Best-effort cloud reconciliation (ADR-012). Cleanly SKIPS with no session / unexposed schema,
+      // so the app never blocks on it; when it merges remote rows we refresh the in-memory document.
+      store
+        .sync()
+        .then(async (r) => {
+          if (cancelled || r.status !== 'ok' || !(r.pulled && r.pulled > 0)) return;
+          const merged = await store.load();
+          if (!cancelled && merged) setData(merged);
+        })
+        .catch(() => {
+          // Sync is strictly optional; a failure never affects the local-first experience.
+        });
     })();
     return () => {
       cancelled = true;

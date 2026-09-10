@@ -168,3 +168,42 @@ Record material product/architecture decisions. Do not log trivial code choices.
   implementing a SyncingStore over the same port once credentials exist.
 - Revisit trigger: founder provisions Supabase (wire the SyncingStore + run TASK-210); or a hard
   requirement forces the local engine to SQLite sooner.
+
+### ADR-012 — koturutin lives in an isolated `koturutin` Postgres schema on a SHARED Supabase project
+- Status: Accepted
+- Date: 2026-09-10
+- Context: The founder directed koturutin to use the EXISTING, shared Supabase project
+  (`hcbrunppfgakxxpyzbqn`, "Karışık Tablolar") — which already hosts other apps' tables in `public`
+  — but demanded HARD isolation: no other app's schema/table/trigger/function/policy may be touched,
+  nothing in `public`, and explicitly NO global `auth.users` signup trigger.
+- Decision:
+  - Create a dedicated `koturutin` schema; every table, index, constraint, function, trigger and RLS
+    policy is namespaced under it (migrations 0001/0002/0003). Nothing is created in `public`.
+  - `koturutin.users.id` is a plain `uuid` equal to `auth.uid()` with NO foreign key to
+    `auth.users` — precisely so no referential-integrity trigger is added to the shared `auth.users`.
+    The profile row is created explicitly by the client (INSERT WITH CHECK `id = auth.uid()`),
+    idempotent and koturutin-only; there is no auto-provisioning of other apps' users.
+  - Isolation is enforced by RLS `auth.uid() = user_id` on every table; SECURITY DEFINER functions
+    pin `search_path = koturutin`; `experiment_library` is client read-only; `safety_events` has RLS
+    on with zero policies/grants (server-only); `outcomes.free_note` is column-revoked from the
+    client + guarded by a consent trigger.
+  - The client talks to the schema via `.schema('koturutin')` (KOTURUTIN_SCHEMA). PostgREST
+    "Exposed schemas" is a project-wide config that is NOT changed via SQL (it would risk the other
+    apps' REST access): adding `koturutin` to Exposed schemas is the single, minimal founder dashboard
+    step required to activate the REST sync path.
+  - Sync is a local-first `SyncingStore` layered over the on-device store (ADR-004): local remains
+    the primary source of truth; sync() pull→merge(union + last-write-wins)→push under RLS, retries
+    with backoff, is non-destructive on failure, and cleanly SKIPS with no session / unexposed schema.
+    free_note is never uploaded from the client.
+- Alternatives considered: a dedicated koturutin Supabase project (rejected by the founder — the
+  shared project is to be used); FK koturutin.users→auth.users (rejected — would add a trigger to the
+  shared auth.users); route sync through an Edge Function to avoid exposing the schema (kept as a
+  future option; the founder preferred `.schema('koturutin')`); altering PostgREST db-schemas via SQL
+  (rejected — clobber risk to other apps' REST access).
+- Consequences: full isolation on shared infrastructure, proven on live Postgres (owner-only,
+  cross-user deny, capture-consent gate, free_note barrier, read-only library, closed safety_events —
+  all pass; `public` unchanged at 94 tables; `auth.users` gained no triggers). Two founder
+  prerequisites remain before cloud sync is live: (1) enable an auth method (e.g. anonymous sign-in)
+  so a session/`auth.uid()` exists; (2) add `koturutin` to PostgREST Exposed schemas.
+- Revisit trigger: if REST exposure is undesirable, move sync to an Edge Function; add soft-delete
+  tombstone sync + a cloud-delete path before enabling bidirectional sync with real user data.

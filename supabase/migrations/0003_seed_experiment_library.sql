@@ -1,11 +1,9 @@
--- koturutin — seed the curated, read-only experiment_library (spine §8; F-009; TASK-150).
--- Idempotent upsert keyed by intent_key. Copy is resolved per language from the app i18n catalog
--- (src/i18n), never duplicated per-language in the DB. These MVP rows are PLACEHOLDERS: they carry
--- clinically_reviewed = false / culturally_reviewed = false and MUST be replaced with reviewed
--- content before beta. `enabled` is true only for the slice; a real gate should require both
--- review flags before enabling.
+-- koturutin — seed the curated, read-only experiment_library in the ISOLATED koturutin schema.
+-- Idempotent upsert by intent_key. Copy is resolved per language in the app (src/i18n). These MVP
+-- rows are PLACEHOLDERS (review flags false) and MUST be replaced with clinically & culturally
+-- reviewed content before beta.
 
-insert into public.experiment_library
+insert into koturutin.experiment_library
   (intent_key, function_label, family, duration_band, min_seconds, max_seconds, difficulty, safety_class, clinically_reviewed, culturally_reviewed, enabled)
 values
   ('transition.home.arrival.connection', 'connection',        'greeting', '30s-3m', 90, 180, 1, 'relationship_safety', false, false, true),

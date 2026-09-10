@@ -22,10 +22,14 @@
     done and NOT fabricated; it remains required before beta (Stage 15). See docs/VALIDATION_PLAN.md.
 - Verification (this run):
   - `npm run typecheck` (tsc --noEmit): PASS.
-  - `npm test` (jest): PASS — 6 suites, 36 tests (decision engine, safety gate + crisis matcher,
-    consent/age gate, North Star, app-data model, local-first persistence round-trip).
+  - `npm test` (jest): PASS — 10 suites, 61 tests (decision engine, safety gate + crisis matcher,
+    consent/age gate, North Star, WHO-5, weekly summary, app-data model, local-first persistence
+    round-trip, **sync mapping/merge, SyncingStore reconciliation**).
   - `npm run lint` (expo lint): PASS.
-  - `npx expo export -p android`: PASS — the app bundles for the Android target.
+  - `npx expo export -p android`: PASS — bundles for Android (1391 modules) after wiring the SyncingStore.
+  - **Live Postgres (project hcbrunppfgakxxpyzbqn), 2026-09-10:** the permanent isolated `koturutin`
+    schema migrations (0001/0002/0003) were APPLIED and a 12-point isolation + authorization matrix
+    run via role impersonation — ALL PASS (see TASK-210 below); test rows cleaned up (zero residue).
   - Device/emulator run + lock-screen notification preview: NOT run here (needs a device; TASK-370).
 - **Audit #1 (Stage 11, 2026-09-09): CONDITIONAL → resolved.** Independent QA of the slice.
   Actioned: P1 (right-moment notification path unwired) — FIXED: `decideNotification` + the
@@ -51,8 +55,13 @@
     SQLite/MMKV) behind the Store port before real user data / beta. Deferred within the slice per
     the review; must land before Stage 14/15.
 - Blockers (real, external):
-  - A DEDICATED koturutin Supabase project (the provided one is a shared multi-app sandbox; do not
-    apply koturutin's schema/auth trigger there). RLS logic already proven against live Postgres.
+  - **Cloud sync activation — 2 minimal founder steps on the shared project (ADR-012):**
+    1. Enable an auth method (e.g. anonymous sign-in) so a session / `auth.uid()` exists for RLS.
+    2. Add `koturutin` to PostgREST "Exposed schemas" (Dashboard → Settings → API). Deliberately NOT
+       done via SQL — it is project-wide config the other apps rely on. Until both are done the app is
+       fully local-first and `SyncingStore.sync()` cleanly SKIPS.
+    (The isolated schema itself is already applied + proven on live Postgres — no dedicated project
+    is needed; the founder directed the shared project be used with schema isolation.)
   - Android/iOS device or emulator (on-device run, notification lock-screen verification TASK-370).
   - Apple/Google developer accounts + signing (Stage 14 release; not needed now).
   - Discovery/validation evidence (ADR-006) before beta.
@@ -85,16 +94,20 @@
 - TASK-180 Decision rule + right-moment notification — DONE (pure engine tested; notifications adapter; device send pending)
 - TASK-190 Transition card via deep-link, reveal-after-open — PARTIAL (in-app card done; notification tap deep-link pending device)
 - TASK-200 Log outcome + persist + risk-phrase diversion — DONE (outcome.tsx + model + safety scan)
-- TASK-210 Vertical-slice e2e against live backend + RLS asserts — PARTIAL. **RLS authorization logic
-  PROVEN against live Postgres 17** (2026-09-10): using the founder-provided Supabase project, an
-  isolated `koturutin` schema was created and the allow/deny suite run via role impersonation —
-  owner-only isolation, cross-user deny (SELECT + WITH CHECK), the `free_note` column+trigger barrier,
-  the capture-consent gate, the single-active invariant, read-only `experiment_library`, and
-  client-inaccessible `safety_events` ALL PASSED; the schema was then dropped (zero residue). NOTE: the
-  provided project (`hcbrunppfgakxxpyzbqn`, "Karışık Tablolar") is a SHARED multi-app sandbox, NOT a
-  dedicated koturutin database — so the full migrations (which add a global `auth.users` trigger and
-  `public` tables) were deliberately NOT applied there. Remaining: apply the migrations to a DEDICATED
-  koturutin project, wire the app's SyncingStore, and run the in-app sign-in→persist e2e on a device.
+- TASK-210 Vertical-slice e2e against live backend + RLS asserts — **DONE (schema+authorization);
+  device e2e pending.** The permanent, ISOLATED `koturutin` schema (ADR-012) is APPLIED to the shared
+  project `hcbrunppfgakxxpyzbqn` (migrations 0001 schema/tables, 0002 RLS/grants/barriers, 0003 seed).
+  A 12-point isolation + authorization matrix ran on live Postgres via role impersonation, ALL PASS:
+  u1 insert/read own (allow); read `experiment_library` (allow, 3 rows) but write denied; `safety_events`
+  read denied; `free_note` column write denied; u2 read u1's rows → 0 (deny); u2 insert row owned by u1
+  → RLS WITH CHECK deny; anon read denied; free_note trigger denies with consent OFF and allows with
+  consent ON; capture-consent gate denies capture without age+health consent. Isolation diff: nothing in
+  `public` changed (94 tables, unchanged), NO trigger added to `auth.users`, all koturutin functions +
+  35 policies + 17 triggers live under `koturutin`. Test rows cleaned up → zero residue (only the 3
+  seeded library rows remain). The app's **SyncingStore** (local-first push/pull/merge/retry, free_note
+  never uploaded) is implemented + unit-tested (src/data/syncing-store.ts + supabase/sync-mapping.ts)
+  and wired into AppState via `.schema('koturutin')`. Remaining (founder-gated, see Blockers): enable an
+  auth method + expose `koturutin` to PostgREST, then run the in-app sign-in→persist→reload e2e on a device.
 
 ### Phase 4 (Stage 12) core features — in progress
 - F-003 Three-day observation (S-03) — DONE locally (src/app/(loop)/observe.tsx + model addObservation + tests)
@@ -126,3 +139,9 @@
   gate, rule-based crisis diversion, North Star count, on-device persistence; Supabase schema + RLS +
   free_note barrier + seed authored (ADR-011). typecheck/lint/jest green; Android bundle exports.
   Validation gate (ADR-006) kept open; TASK-210 held on credentials.
+- 2026-09-10 — Isolated `koturutin` schema (ADR-012) APPLIED to the shared project and PROVEN on live
+  Postgres (12-point isolation+authorization matrix, all pass; zero residue; public/auth.users
+  untouched). Rewrote migrations 0001/0002/0003 to the `koturutin` schema (no auth.users FK/trigger).
+  Built + unit-tested the local-first SyncingStore (push/pull/merge/retry, free_note never uploaded)
+  and wired it into AppState via `.schema('koturutin')`. typecheck/lint/61 tests green; Android bundle
+  exports. Cloud sync activation now needs 2 founder dashboard steps (auth method + Exposed schemas).
