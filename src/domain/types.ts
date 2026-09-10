@@ -176,6 +176,19 @@ export interface Observation {
   deletedAt: string | null;
 }
 
+/** An optional WHO-5 Well-Being Index response (spine §10/§15; F-014). Optional, non-diagnostic. */
+export interface Who5Response {
+  id: string;
+  userId: string;
+  /** Raw 0–5 answers to the 5 items. */
+  answers: number[];
+  /** WHO-5 percentage score 0–100 (sum of the 5 items × 4). Never presented as a diagnosis. */
+  score: number;
+  capturedAt: string;
+  createdAt: string;
+  deletedAt: string | null;
+}
+
 /** Curated, read-only reference content (spine §5/§8). NOT user data. */
 export interface ExperimentLibraryEntry {
   id: string;

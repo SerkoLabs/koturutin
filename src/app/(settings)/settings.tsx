@@ -77,6 +77,9 @@ export default function Settings() {
         </Card>
       ) : null}
 
+      {/* Optional wellbeing measure */}
+      <Button title={t('settings.who5')} onPress={() => router.push('/who5')} variant="secondary" />
+
       {/* Data control */}
       <Button title={t('settings.export')} onPress={onExport} variant="secondary" />
       <Button title={t('settings.health.withdraw')} onPress={onWithdrawHealth} variant="danger" />

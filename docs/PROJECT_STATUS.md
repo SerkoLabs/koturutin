@@ -103,7 +103,9 @@
 - F-011 Privacy & data control (S-09) — PARTIAL (src/app/(settings)/settings.tsx: consent management,
   language, client-side export via Share, health-consent withdrawal, delete-all-data/account). "Delete
   AI memory" deferred until insights are persisted; cloud delete/export via Edge Function pending creds.
-- F-002 full narration / F-013 notification settings / F-014 WHO-5 — NEXT.
+- F-014 Optional WHO-5 wellbeing check (S-09 sub-view, UF-015) — DONE locally: opt-in, non-diagnostic
+  5-item reflection with pure scoring (src/domain/who5 + tests) and a calm result; gated on consent.
+- F-002 full narration / F-013 notification settings — NEXT.
 
 ## Quality commands
 

@@ -8,11 +8,13 @@ import { canEnterLoop as canEnterLoopPredicate, loopBlockReason } from '@/domain
 import {
   addConfirmedMoment,
   addObservation,
+  addWho5,
   countObservations,
   createProfile,
   emptyAppData,
   getActiveExperiment,
   getPriorityMoment,
+  latestWho5,
   offerAttempt,
   recordOutcome,
   respondToAttempt,
@@ -24,6 +26,7 @@ import {
 } from '@/domain/model';
 import { countWeeklyConsciousTransitions } from '@/domain/northstar/northstar';
 import { buildWeeklySummary, type WeeklySummary } from '@/domain/summary/weekly';
+import { who5Score } from '@/domain/who5/who5';
 import { decideNotification } from '@/domain/decision-engine/engine';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
 import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome } from '@/domain/types';
@@ -49,6 +52,7 @@ interface AppStateValue {
   weeklyConsciousTransitions: number;
   weeklySummary: WeeklySummary;
   observationCount: number;
+  latestWho5Score: number | null;
   // actions
   addObservationCheckin: (input: {
     context: string | null;
@@ -56,6 +60,7 @@ interface AppStateValue {
     craving: number | null;
     energy: number | null;
   }) => Promise<Result<AppData>>;
+  submitWho5: (answers: number[]) => Promise<Result<AppData>>;
   deleteAllData: () => Promise<void>;
   setLanguage: (lang: Language) => Promise<void>;
   grantConsent: (patch: ConsentPatch) => Promise<void>;
@@ -143,6 +148,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       weeklyConsciousTransitions: countWeeklyConsciousTransitions(data.attempts, nowISO()),
       weeklySummary: buildWeeklySummary(data, nowISO()),
       observationCount: countObservations(data),
+      latestWho5Score: latestWho5(data)?.score ?? null,
+
+      submitWho5: async (answers) => {
+        const score = who5Score(answers);
+        if (score === null) return { ok: false, reason: 'loop_locked' };
+        const r = addWho5(data, { id: newId(), userId, answers, score, nowISO: nowISO() });
+        if (r.ok) await persist(r.value);
+        return r;
+      },
 
       addObservationCheckin: async (input) => {
         const r = addObservation(data, {

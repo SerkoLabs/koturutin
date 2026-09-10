@@ -129,14 +129,24 @@ export function Field({ label, ...props }: { label: string } & TextInputProps) {
   );
 }
 
-/** A calm 0–10 scale, tappable, no gamification. */
-export function Scale({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number) => void }) {
+/** A calm 0–max scale (default 0–10), tappable, no gamification. */
+export function Scale({
+  label,
+  value,
+  onChange,
+  max = 10,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (v: number) => void;
+  max?: number;
+}) {
   const { colors } = useTheme();
   return (
     <View style={{ gap: spacing.sm }}>
       <Txt variant="label">{label}</Txt>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-        {Array.from({ length: 11 }, (_, i) => i).map((n) => {
+        {Array.from({ length: max + 1 }, (_, i) => i).map((n) => {
           const active = value === n;
           return (
             <Pressable

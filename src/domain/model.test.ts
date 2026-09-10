@@ -167,7 +167,8 @@ describe('normalizeAppData (forward-compatible load)', () => {
     const legacy = { version: 1, profile: null, moments: [], routineEdges: [], experiments: [], attempts: [], outcomes: [] };
     const n = normalizeAppData(legacy as Partial<AppData>);
     expect(n.observations).toEqual([]);
-    expect(n.version).toBe(2);
+    expect(n.who5).toEqual([]);
+    expect(n.version).toBe(3);
   });
 });
 

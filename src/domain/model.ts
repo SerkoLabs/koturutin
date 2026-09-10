@@ -21,9 +21,10 @@ import type {
   Outcome,
   RoutineEdge,
   UserProfile,
+  Who5Response,
 } from '@/domain/types';
 
-export const APP_DATA_VERSION = 2;
+export const APP_DATA_VERSION = 3;
 
 export interface AppData {
   version: number;
@@ -34,6 +35,7 @@ export interface AppData {
   attempts: Attempt[];
   outcomes: Outcome[];
   observations: Observation[];
+  who5: Who5Response[];
 }
 
 export function emptyAppData(): AppData {
@@ -46,6 +48,7 @@ export function emptyAppData(): AppData {
     attempts: [],
     outcomes: [],
     observations: [],
+    who5: [],
   };
 }
 
@@ -66,6 +69,7 @@ export function normalizeAppData(raw: Partial<AppData> | null | undefined): AppD
     attempts: raw.attempts ?? [],
     outcomes: raw.outcomes ?? [],
     observations: raw.observations ?? [],
+    who5: raw.who5 ?? [],
     profile: raw.profile ?? null,
   };
 }
@@ -254,6 +258,35 @@ export function addObservation(
 
 export function countObservations(data: AppData): number {
   return data.observations.filter((o) => !o.deletedAt).length;
+}
+
+// ---------------------------------------------------------------------------
+// WHO-5 optional wellbeing check (F-014). Gated: special-category data.
+// ---------------------------------------------------------------------------
+
+export function addWho5(
+  data: AppData,
+  args: { id: string; userId: string; answers: number[]; score: number; nowISO: string },
+): Result<AppData> {
+  if (!data.profile || !canEnterLoop(data.profile)) {
+    return { ok: false, reason: 'loop_locked' };
+  }
+  const entry: Who5Response = {
+    id: args.id,
+    userId: args.userId,
+    answers: args.answers,
+    score: args.score,
+    capturedAt: args.nowISO,
+    createdAt: args.nowISO,
+    deletedAt: null,
+  };
+  return { ok: true, value: { ...data, who5: [...data.who5, entry] } };
+}
+
+export function latestWho5(data: AppData): Who5Response | null {
+  return data.who5
+    .filter((w) => !w.deletedAt)
+    .reduce<Who5Response | null>((latest, w) => (!latest || w.capturedAt > latest.capturedAt ? w : latest), null);
 }
 
 // ---------------------------------------------------------------------------
