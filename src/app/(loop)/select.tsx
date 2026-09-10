@@ -5,42 +5,29 @@ import { useAppState } from '@/state/AppState';
 import { EXPERIMENT_LIBRARY_SEED } from '@/data/library-seed';
 import { requiresRelationshipGate, type RelationshipContextAnswer } from '@/domain/safety/safety';
 import type { ExperimentLibraryEntry } from '@/domain/types';
-
-// Minimal per-entry copy for the arriving-home slice (resolved from intent keys in a fuller build).
-const ENTRY_COPY: Record<string, { tr: string; en: string; then: { tr: string; en: string } }> = {
-  'transition.home.arrival.connection': {
-    tr: '90 saniyelik aile teması, sonra bilinçli seçim',
-    en: '90 seconds of family contact, then a conscious choice',
-    then: { tr: 'Önce 90 saniye eşine/çocuğuna yönel', en: 'First, turn to your partner/child for 90 seconds' },
-  },
-  'transition.home.arrival.relief': {
-    tr: 'Kapıda 60 saniye nefes / kıyafet değiştir',
-    en: '60 seconds of breathing / change clothes at the door',
-    then: { tr: '60 saniye yavaş nefes al', en: 'Take 60 seconds of slow breathing' },
-  },
-};
+import type { MessageKey } from '@/i18n';
 
 export default function Select() {
   const router = useRouter();
-  const { t, language, chooseExperiment } = useAppState();
+  const { t, chooseExperiment } = useAppState();
   const [gateFor, setGateFor] = useState<ExperimentLibraryEntry | null>(null);
 
   // Arriving-home offers the connection + relief options (rule-based; no ML).
   const options = useMemo(
-    () => EXPERIMENT_LIBRARY_SEED.filter((e) => e.enabled && (e.functionLabel === 'connection' || e.functionLabel === 'relief_transition')),
+    () =>
+      EXPERIMENT_LIBRARY_SEED.filter(
+        (e) => e.enabled && (e.functionLabel === 'connection' || e.functionLabel === 'relief_transition'),
+      ),
     [],
   );
 
+  // Copy resolved from intent keys (F-012) — no hardcoded literals, no raw-key fallback.
+  const labelOf = (e: ExperimentLibraryEntry) => t(`lib.${e.intentKey}.label` as MessageKey);
+  const thenOf = (e: ExperimentLibraryEntry) => t(`lib.${e.intentKey}.then` as MessageKey);
+  const durationOf = (e: ExperimentLibraryEntry) => t(`dur.${e.durationBand}` as MessageKey);
+
   async function activate(entry: ExperimentLibraryEntry, relationshipAnswer: RelationshipContextAnswer | null) {
-    const copy = ENTRY_COPY[entry.intentKey];
-    const r = await chooseExperiment({
-      entry,
-      ifThisThenThat: {
-        if: t('select.plan.if'),
-        then: copy ? copy.then[language] : entry.intentKey,
-      },
-      relationshipAnswer,
-    });
+    const r = await chooseExperiment({ entry, thenText: thenOf(entry), relationshipAnswer });
     if (r.ok) {
       router.replace('/home');
     } else if (r.reason === 'relationship_unsafe') {
@@ -74,15 +61,12 @@ export default function Select() {
       <Txt variant="title">{t('select.title')}</Txt>
       <Txt variant="muted">{t('select.body')}</Txt>
       <Spacer size={4} />
-      {options.map((entry) => {
-        const copy = ENTRY_COPY[entry.intentKey];
-        return (
-          <Card key={entry.id} onPress={() => onPick(entry)}>
-            <Txt variant="subtitle">{copy ? copy[language] : entry.intentKey}</Txt>
-            <Txt variant="muted">{`${entry.durationBand}`}</Txt>
-          </Card>
-        );
-      })}
+      {options.map((entry) => (
+        <Card key={entry.id} onPress={() => onPick(entry)}>
+          <Txt variant="subtitle">{labelOf(entry)}</Txt>
+          <Txt variant="muted">{durationOf(entry)}</Txt>
+        </Card>
+      ))}
     </Screen>
   );
 }

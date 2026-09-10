@@ -60,14 +60,19 @@ export default function Capture() {
                 key={h}
                 onPress={() => setHour(h)}
                 accessibilityRole="button"
+                accessibilityState={{ selected: active }}
                 style={{
-                  paddingVertical: spacing.sm,
+                  minHeight: 44,
+                  justifyContent: 'center',
+                  paddingVertical: spacing.md,
                   paddingHorizontal: spacing.lg,
                   borderRadius: radius.pill,
+                  borderWidth: active ? 2 : 1,
+                  borderColor: active ? colors.accent : colors.border,
                   backgroundColor: active ? colors.accent : colors.surfaceAlt,
                 }}
               >
-                <Txt variant="body">{`${String(h).padStart(2, '0')}:00`}</Txt>
+                <Txt variant="body">{`${active ? '✓ ' : ''}${String(h).padStart(2, '0')}:00`}</Txt>
               </Pressable>
             );
           })}

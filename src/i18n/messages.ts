@@ -152,6 +152,20 @@ export const tr = {
   'settings.back': 'Geri',
   'home.settings.cta': 'Ayarlar ve gizlilik',
 
+  // Experiment library copy (resolved from intent keys, F-012)
+  'lib.transition.home.arrival.connection.label': '90 saniyelik aile teması, sonra bilinçli seçim',
+  'lib.transition.home.arrival.connection.then': 'Önce 90 saniye eşine ya da çocuğuna yönel',
+  'lib.transition.home.arrival.relief.label': 'Kapıda 60 saniye nefes / kıyafet değiştir',
+  'lib.transition.home.arrival.relief.then': '60 saniye yavaş nefes al',
+  'dur.30s-3m': '30 sn – 3 dk',
+  'dur.60s-5m': '60 sn – 5 dk',
+  'dur.1-10m': '1 – 10 dk',
+
+  // Last outcome on Home
+  'home.lastOutcome.label': 'Son kayıt',
+  'home.lastOutcome.connection': 'Bağ',
+  'home.lastOutcome.craving': 'İstek',
+
   // Generic
   'common.continue': 'Devam',
   'common.back': 'Geri',
@@ -291,6 +305,18 @@ export const en: Record<MessageKey, string> = {
   'settings.deleteAccount.confirm': 'Yes, delete everything',
   'settings.back': 'Back',
   'home.settings.cta': 'Settings & privacy',
+
+  'lib.transition.home.arrival.connection.label': '90 seconds of family contact, then a conscious choice',
+  'lib.transition.home.arrival.connection.then': 'First, turn to your partner or child for 90 seconds',
+  'lib.transition.home.arrival.relief.label': '60 seconds of breathing / change clothes at the door',
+  'lib.transition.home.arrival.relief.then': 'Take 60 seconds of slow breathing',
+  'dur.30s-3m': '30s – 3 min',
+  'dur.60s-5m': '60s – 5 min',
+  'dur.1-10m': '1 – 10 min',
+
+  'home.lastOutcome.label': 'Last log',
+  'home.lastOutcome.connection': 'Connection',
+  'home.lastOutcome.craving': 'Craving',
 
   'common.continue': 'Continue',
   'common.back': 'Back',

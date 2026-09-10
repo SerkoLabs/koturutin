@@ -6,7 +6,8 @@ import { useAppState } from '@/state/AppState';
 
 export default function Home() {
   const router = useRouter();
-  const { t, priorityMoment, activeExperiment, weeklyConsciousTransitions, openTransitionCard } = useAppState();
+  const { t, priorityMoment, activeExperiment, lastOutcome, weeklyConsciousTransitions, openTransitionCard } =
+    useAppState();
 
   async function onTryNow() {
     const attemptId = await openTransitionCard();
@@ -55,6 +56,21 @@ export default function Home() {
             <Button title={t('home.openCard.cta')} onPress={onTryNow} />
           </Card>
         )
+      ) : null}
+
+      {/* The persisted outcome is surfaced on reload (proof the loop's data round-trips). */}
+      {lastOutcome ? (
+        <Card>
+          <Txt variant="label">{t('home.lastOutcome.label')}</Txt>
+          <Txt variant="muted">
+            {[
+              lastOutcome.connectionFeeling !== null ? `${t('home.lastOutcome.connection')} ${lastOutcome.connectionFeeling}/10` : null,
+              lastOutcome.craving !== null ? `${t('home.lastOutcome.craving')} ${lastOutcome.craving}/10` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Txt>
+        </Card>
       ) : null}
 
       {priorityMoment ? (

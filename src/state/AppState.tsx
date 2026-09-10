@@ -24,11 +24,13 @@ import {
 } from '@/domain/model';
 import { countWeeklyConsciousTransitions } from '@/domain/northstar/northstar';
 import { buildWeeklySummary, type WeeklySummary } from '@/domain/summary/weekly';
+import { decideNotification } from '@/domain/decision-engine/engine';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
-import type { AttemptResponse, Experiment, ExperimentLibraryEntry, IfThenPlan, Language, Moment } from '@/domain/types';
+import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome } from '@/domain/types';
 import { AsyncStorageStore } from '@/data/async-store';
+import { scheduleTransitionReminder } from '@/notifications';
 import { detectLanguage, makeT, type TFunction } from '@/i18n';
-import { newId, nowISO } from '@/lib/ids';
+import { localDayOfWeek, localMinuteOfDay, newId, nowISO } from '@/lib/ids';
 import type { Store } from '@/data/store';
 
 const store: Store = new AsyncStorageStore();
@@ -43,6 +45,7 @@ interface AppStateValue {
   loopBlock: ReturnType<typeof loopBlockReason>;
   priorityMoment: Moment | null;
   activeExperiment: Experiment | null;
+  lastOutcome: Outcome | null;
   weeklyConsciousTransitions: number;
   weeklySummary: WeeklySummary;
   observationCount: number;
@@ -66,7 +69,7 @@ interface AppStateValue {
   }) => Promise<Result<AppData>>;
   chooseExperiment: (input: {
     entry: ExperimentLibraryEntry;
-    ifThisThenThat: IfThenPlan;
+    thenText: string;
     relationshipAnswer: RelationshipContextAnswer | null;
   }) => Promise<Result<AppData>>;
   openTransitionCard: () => Promise<string | null>; // returns attemptId
@@ -110,7 +113,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const persist = useCallback(async (next: AppData) => {
     setData(next);
-    await store.save(next);
+    try {
+      await store.save(next);
+    } catch {
+      // A failed local save must not crash the app or leave callers hanging; state stays in memory.
+    }
   }, []);
 
   const language: Language = data.profile?.language ?? 'tr';
@@ -120,6 +127,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const t = makeT(language);
     const priorityMoment = getPriorityMoment(data);
     const activeExperiment = getActiveExperiment(data);
+    const lastOutcome: Outcome | null = data.outcomes
+      .filter((o) => !o.deletedAt)
+      .reduce<Outcome | null>((latest, o) => (!latest || o.capturedAt > latest.capturedAt ? o : latest), null);
     return {
       loading,
       data,
@@ -129,6 +139,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       loopBlock: data.profile ? loopBlockReason(data.profile) : 'age_not_confirmed',
       priorityMoment,
       activeExperiment,
+      lastOutcome,
       weeklyConsciousTransitions: countWeeklyConsciousTransitions(data.attempts, nowISO()),
       weeklySummary: buildWeeklySummary(data, nowISO()),
       observationCount: countObservations(data),
@@ -189,16 +200,53 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       chooseExperiment: async (input) => {
         if (!priorityMoment) return { ok: false, reason: 'loop_locked' };
+        const experimentId = newId();
         const r = selectExperiment(data, {
-          experimentId: newId(),
+          experimentId,
           userId,
           momentId: priorityMoment.id,
           entry: input.entry,
-          ifThisThenThat: input.ifThisThenThat,
+          // The implementation intention references the confirmed moment (F-005): "when <moment>, then <plan>".
+          ifThisThenThat: { if: priorityMoment.name, then: input.thenText },
           relationshipAnswer: input.relationshipAnswer,
           nowISO: nowISO(),
         });
-        if (r.ok) await persist(r.value);
+        if (r.ok) {
+          await persist(r.value);
+          // Wire the pure decision engine → local notification adapter (TASK-180). Best-effort:
+          // device delivery is verified separately (TASK-370); the in-app card is always available.
+          try {
+            const m = priorityMoment;
+            if (m.timeWindowStartMinute !== null) {
+              const decision = decideNotification({
+                nowMinute: localMinuteOfDay(),
+                dayOfWeek: localDayOfWeek(),
+                moment: {
+                  decisionPoint: m.decisionPoint,
+                  timeWindowStartMinute: m.timeWindowStartMinute,
+                  timeWindowEndMinute: m.timeWindowEndMinute,
+                },
+                proactiveSentToday: 0, // per-day budget accounting is hardened in TASK-330
+                notificationBudget: data.profile?.notificationBudget ?? 2,
+                quietWindows: data.profile?.quietWindows ?? [],
+                lastResponse: null,
+              });
+              if (decision.action === 'schedule' && decision.scheduleAtMinute !== undefined) {
+                const fire = new Date();
+                fire.setHours(Math.floor(decision.scheduleAtMinute / 60), decision.scheduleAtMinute % 60, 0, 0);
+                if (fire.getTime() > Date.now()) {
+                  await scheduleTransitionReminder({
+                    language,
+                    fireDate: fire,
+                    ref: { kind: 'transition_card', ref: experimentId },
+                  });
+                }
+              }
+            }
+          } catch {
+            // Notifications unavailable (no permission / platform) — the in-app card is the fallback (UF-006).
+          }
+        }
         return r;
       },
       openTransitionCard: async () => {

@@ -171,6 +171,48 @@ describe('normalizeAppData (forward-compatible load)', () => {
   });
 });
 
+describe('single-priority-moment invariant', () => {
+  it('clears the previous priority when a new confirmed moment is added', () => {
+    const d1 = withConfirmedMoment(consented());
+    expect(getPriorityMoment(d1)?.id).toBe('m1');
+    const r = addConfirmedMoment(d1, {
+      momentId: 'm2', userId: 'u1', name: 'Yemek sonrası', decisionPoint: 'after_meal', context: null,
+      timeWindowStartMinute: null, timeWindowEndMinute: null, edges: [], nowISO: NOW,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const priorities = r.value.moments.filter((m) => m.isPriority && !m.deletedAt);
+    expect(priorities).toHaveLength(1);
+    expect(priorities[0].id).toBe('m2');
+  });
+});
+
+describe('attempt response transitions (no failure semantics)', () => {
+  function withOfferedAttempt(): AppData {
+    let d = withConfirmedMoment(consented());
+    const sel = selectExperiment(d, {
+      experimentId: 'x1', userId: 'u1', momentId: 'm1', entry: connectionEntry,
+      ifThisThenThat: { if: 'a', then: 'b' }, relationshipAnswer: 'safe', nowISO: NOW,
+    });
+    if (!sel.ok) throw new Error('sel');
+    d = sel.value;
+    return offerAttempt(d, { attemptId: 'att1', userId: 'u1', experimentId: 'x1', momentId: 'm1', nowISO: NOW });
+  }
+
+  it('records "not_now" with a responded timestamp and no streak reset', () => {
+    const d = respondToAttempt(withOfferedAttempt(), { attemptId: 'att1', response: 'not_now', nowISO: NOW });
+    expect(d.attempts[0].response).toBe('not_now');
+    expect(d.attempts[0].respondedAt).toBe(NOW);
+  });
+
+  it('records "declined" without deleting or penalizing anything', () => {
+    const before = withOfferedAttempt();
+    const d = respondToAttempt(before, { attemptId: 'att1', response: 'declined', nowISO: NOW });
+    expect(d.attempts[0].response).toBe('declined');
+    expect(d.experiments.filter((e) => e.isActive)).toHaveLength(1); // experiment still active
+  });
+});
+
 describe('attempt + outcome loop', () => {
   it('offers, responds "did", records an outcome, and persists it', () => {
     let d = withConfirmedMoment(consented());

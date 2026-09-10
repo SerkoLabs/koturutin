@@ -27,6 +27,16 @@
   - `npm run lint` (expo lint): PASS.
   - `npx expo export -p android`: PASS — the app bundles for the Android target.
   - Device/emulator run + lock-screen notification preview: NOT run here (needs a device; TASK-370).
+- **Audit #1 (Stage 11, 2026-09-09): CONDITIONAL → resolved.** Independent QA of the slice.
+  Actioned: P1 (right-moment notification path unwired) — FIXED: `decideNotification` + the
+  notification adapter are now wired on experiment activation (schedule) and a tap→S-06 handler in
+  `_layout.tsx` (TASK-180/190). P2s — FIXED: experiment copy resolved from intent keys (no hardcoded
+  literals / raw-key fallback, F-012); the if-then plan now references the confirmed moment (F-005);
+  the last outcome is surfaced on Home after reload; added tests for the single-priority invariant and
+  the not_now/declined transitions; enlarged touch targets to ≥44 with non-color-only selection.
+  Tracked (pre-beta): enforce `experiment_library.enabled` only with both review flags; always-visible
+  safety affordance on loop screens (Phase 7). Stage 11 PASS on slice scope; live-backend RLS e2e
+  (TASK-210) now unblockable with the provided Supabase credentials.
 - Independent security/privacy/safety review (2026-09-09): no P0. Safety/consent/lock-screen/RLS
   logic verified correct. Actioned in this run:
   - P1 (server-side capture-consent gate missing) — FIXED: added `user_capture_allowed()` +

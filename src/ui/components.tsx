@@ -145,11 +145,13 @@ export function Scale({ label, value, onChange }: { label: string; value: number
               accessibilityRole="button"
               accessibilityLabel={`${label} ${n}`}
               style={{
-                width: 34,
-                height: 34,
+                width: 44,
+                height: 44,
                 borderRadius: radius.pill,
                 alignItems: 'center',
                 justifyContent: 'center',
+                borderWidth: active ? 2 : 1,
+                borderColor: active ? colors.accent : colors.border,
                 backgroundColor: active ? colors.accent : colors.surfaceAlt,
               }}
             >
