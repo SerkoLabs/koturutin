@@ -51,7 +51,8 @@
     SQLite/MMKV) behind the Store port before real user data / beta. Deferred within the slice per
     the review; must land before Stage 14/15.
 - Blockers (real, external):
-  - Supabase project + publishable/anon key (enables cloud sync, live auth, TASK-210 RLS e2e).
+  - A DEDICATED koturutin Supabase project (the provided one is a shared multi-app sandbox; do not
+    apply koturutin's schema/auth trigger there). RLS logic already proven against live Postgres.
   - Android/iOS device or emulator (on-device run, notification lock-screen verification TASK-370).
   - Apple/Google developer accounts + signing (Stage 14 release; not needed now).
   - Discovery/validation evidence (ADR-006) before beta.
@@ -84,7 +85,16 @@
 - TASK-180 Decision rule + right-moment notification — DONE (pure engine tested; notifications adapter; device send pending)
 - TASK-190 Transition card via deep-link, reveal-after-open — PARTIAL (in-app card done; notification tap deep-link pending device)
 - TASK-200 Log outcome + persist + risk-phrase diversion — DONE (outcome.tsx + model + safety scan)
-- TASK-210 Vertical-slice e2e against live backend + RLS asserts — BLOCKED (founder Supabase credentials)
+- TASK-210 Vertical-slice e2e against live backend + RLS asserts — PARTIAL. **RLS authorization logic
+  PROVEN against live Postgres 17** (2026-09-10): using the founder-provided Supabase project, an
+  isolated `koturutin` schema was created and the allow/deny suite run via role impersonation —
+  owner-only isolation, cross-user deny (SELECT + WITH CHECK), the `free_note` column+trigger barrier,
+  the capture-consent gate, the single-active invariant, read-only `experiment_library`, and
+  client-inaccessible `safety_events` ALL PASSED; the schema was then dropped (zero residue). NOTE: the
+  provided project (`hcbrunppfgakxxpyzbqn`, "Karışık Tablolar") is a SHARED multi-app sandbox, NOT a
+  dedicated koturutin database — so the full migrations (which add a global `auth.users` trigger and
+  `public` tables) were deliberately NOT applied there. Remaining: apply the migrations to a DEDICATED
+  koturutin project, wire the app's SyncingStore, and run the in-app sign-in→persist e2e on a device.
 
 ### Phase 4 (Stage 12) core features — in progress
 - F-003 Three-day observation (S-03) — DONE locally (src/app/(loop)/observe.tsx + model addObservation + tests)
