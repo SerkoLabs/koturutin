@@ -19,6 +19,7 @@ import {
   recordOutcome,
   respondToAttempt,
   selectExperiment,
+  setNotificationPrefs,
   updateProfile,
   type AppData,
   type ConsentPatch,
@@ -29,7 +30,7 @@ import { buildWeeklySummary, type WeeklySummary } from '@/domain/summary/weekly'
 import { who5Score } from '@/domain/who5/who5';
 import { decideNotification } from '@/domain/decision-engine/engine';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
-import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome } from '@/domain/types';
+import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome, QuietWindow } from '@/domain/types';
 import { AsyncStorageStore } from '@/data/async-store';
 import { SyncingStore } from '@/data/syncing-store';
 import { SupabaseRemoteGateway } from '@/data/supabase/gateway';
@@ -68,6 +69,8 @@ interface AppStateValue {
   deleteAllData: () => Promise<void>;
   setLanguage: (lang: Language) => Promise<void>;
   grantConsent: (patch: ConsentPatch) => Promise<void>;
+  setNotificationBudget: (budget: number) => Promise<void>;
+  setQuietWindows: (windows: QuietWindow[]) => Promise<void>;
   addArrivingHomeMoment: (input: {
     name: string;
     trigger: string;
@@ -205,6 +208,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       grantConsent: async (patch) => {
         await persist(updateProfile(data, patch, nowISO()));
+      },
+      setNotificationBudget: async (budget) => {
+        await persist(setNotificationPrefs(data, { notificationBudget: budget }, nowISO()));
+      },
+      setQuietWindows: async (windows) => {
+        await persist(setNotificationPrefs(data, { quietWindows: windows }, nowISO()));
       },
       addArrivingHomeMoment: async (input) => {
         const r = addConfirmedMoment(data, {

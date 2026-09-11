@@ -19,6 +19,7 @@ import type {
   Moment,
   Observation,
   Outcome,
+  QuietWindow,
   RoutineEdge,
   UserProfile,
   Who5Response,
@@ -141,6 +142,49 @@ export function updateProfile(data: AppData, patch: ConsentPatch, nowISO: string
     updatedAt: nowISO,
   };
   return { ...data, profile };
+}
+
+// ---------------------------------------------------------------------------
+// Notification preferences (F-013, S-09): daily proactive budget + quiet windows.
+// These feed the rule-based decision engine (spine §7). NOT consents — no consent stamp.
+// ---------------------------------------------------------------------------
+
+export interface NotificationPrefsPatch {
+  notificationBudget?: number;
+  quietWindows?: QuietWindow[];
+}
+
+/** Clamp the daily proactive-notification budget to the allowed 0–2 (spine §7). */
+export function clampNotificationBudget(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(2, Math.round(n)));
+}
+
+/** A quiet window is a valid same-day interval (start < end) on 0–6 weekdays (empty = every day).
+ *  Overnight windows are out of scope for the MVP engine (see decision-engine). */
+export function isValidQuietWindow(w: QuietWindow): boolean {
+  return (
+    Number.isInteger(w.startMinute) &&
+    Number.isInteger(w.endMinute) &&
+    w.startMinute >= 0 &&
+    w.startMinute < w.endMinute &&
+    w.endMinute <= 1440 &&
+    Array.isArray(w.days) &&
+    w.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+  );
+}
+
+/**
+ * Update the notification budget and/or quiet windows. Total + defensive: the budget is clamped to
+ * 0–2 and invalid quiet windows are dropped, so the persisted profile is always engine-safe.
+ */
+export function setNotificationPrefs(data: AppData, patch: NotificationPrefsPatch, nowISO: string): AppData {
+  if (!data.profile) return data;
+  const notificationBudget =
+    patch.notificationBudget !== undefined ? clampNotificationBudget(patch.notificationBudget) : data.profile.notificationBudget;
+  const quietWindows =
+    patch.quietWindows !== undefined ? patch.quietWindows.filter(isValidQuietWindow) : data.profile.quietWindows;
+  return { ...data, profile: { ...data.profile, notificationBudget, quietWindows, updatedAt: nowISO } };
 }
 
 // ---------------------------------------------------------------------------

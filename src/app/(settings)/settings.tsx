@@ -77,6 +77,9 @@ export default function Settings() {
         </Card>
       ) : null}
 
+      {/* Notification preferences (F-013) */}
+      <Button title={t('settings.notifications')} onPress={() => router.push('/notifications')} variant="secondary" />
+
       {/* Optional wellbeing measure */}
       <Button title={t('settings.who5')} onPress={() => router.push('/who5')} variant="secondary" />
 

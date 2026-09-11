@@ -22,11 +22,11 @@
     done and NOT fabricated; it remains required before beta (Stage 15). See docs/VALIDATION_PLAN.md.
 - Verification (this run):
   - `npm run typecheck` (tsc --noEmit): PASS.
-  - `npm test` (jest): PASS — 10 suites, 61 tests (decision engine, safety gate + crisis matcher,
+  - `npm test` (jest): PASS — 11 suites, 69 tests (decision engine, safety gate + crisis matcher,
     consent/age gate, North Star, WHO-5, weekly summary, app-data model, local-first persistence
-    round-trip, **sync mapping/merge, SyncingStore reconciliation**).
+    round-trip, sync mapping/merge, SyncingStore reconciliation, **notification prefs + engine integration**).
   - `npm run lint` (expo lint): PASS.
-  - `npx expo export -p android`: PASS — bundles for Android (1391 modules) after wiring the SyncingStore.
+  - `npx expo export -p android`: PASS — bundles for Android (1392 modules) with the SyncingStore + F-013 screen.
   - **Live Postgres (project hcbrunppfgakxxpyzbqn), 2026-09-10:** the permanent isolated `koturutin`
     schema migrations (0001/0002/0003) were APPLIED and a 12-point isolation + authorization matrix
     run via role impersonation — ALL PASS (see TASK-210 below); test rows cleaned up (zero residue).
@@ -118,7 +118,11 @@
   AI memory" deferred until insights are persisted; cloud delete/export via Edge Function pending creds.
 - F-014 Optional WHO-5 wellbeing check (S-09 sub-view, UF-015) — DONE locally: opt-in, non-diagnostic
   5-item reflection with pure scoring (src/domain/who5 + tests) and a calm result; gated on consent.
-- F-002 full narration / F-013 notification settings — NEXT.
+- F-013 Notification settings (S-09) — DONE locally: a settings screen to control the decision
+  engine's inputs — daily proactive budget (0–2; "0" fully disables proactive nudges) and one
+  same-day quiet interval — persisted to the profile and synced via the users row (src/app/(settings)/
+  notifications.tsx + model.setNotificationPrefs + tests; engine-integration tests included).
+- F-002 full day narration — NEXT.
 
 ## Quality commands
 
