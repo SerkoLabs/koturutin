@@ -1,7 +1,7 @@
 /**
  * Day-map narration (F-002, S-?; spine §3 "see the whole chain"). A DETERMINISTIC, PURE PROJECTION
- * over the user's existing local data — confirmed `moments`, their `routine_edges`, and the
- * `observations` attached to them. It builds NO parallel routine system and needs NO new storage:
+ * over the user's existing local data — their non-deleted `moments`, the `routine_edges` for each,
+ * and the `observations` attached to them. It builds NO parallel routine system and needs NO new storage:
  * the day map is derived on demand from the single AppData document (ADR-004 local-first).
  *
  * The goal is to make the automatic chain of the day VISIBLE — not to diagnose, prescribe, or blame.

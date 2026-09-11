@@ -47,6 +47,10 @@ class FakeGateway implements RemoteGateway {
     }
     return [...this.tables[table].values()];
   }
+
+  async signOut(): Promise<void> {
+    this.uid = null; // ending the session makes currentUserId() resolve null
+  }
 }
 
 function profile(): UserProfile {
@@ -199,6 +203,26 @@ describe('SyncingStore.sync — reconciliation', () => {
     const r = await store.sync();
     expect(r.status).toBe('ok');
     expect(gw.fetchCalls).toBeGreaterThanOrEqual(3); // 2 failures + 1 success on the first table
+  });
+
+  it('signOut prevents resurrection: after delete + signOut, sync skips and does not re-pull cloud rows (SEC P1-1)', async () => {
+    const local = new MemoryStore({ ...emptyAppData(), profile: profile(), moments: [moment('m1')] });
+    const gw = new FakeGateway();
+    // The cloud still holds this user's rows.
+    const remoteData: AppData = { ...emptyAppData(), moments: [moment('mRemote')] };
+    const remoteRows = buildPushRows(remoteData, UID);
+    for (const t of SYNC_TABLES) gw.seed(t, remoteRows[t]);
+    const store = new SyncingStore(local, gw, { sleep: noSleep });
+
+    // Simulate account deletion: end the session, then wipe local to a fresh empty document.
+    await store.signOut();
+    await local.save(emptyAppData());
+
+    const r = await store.sync();
+    expect(r.status).toBe('skipped');
+    expect(r.reason).toBe('no-session');
+    const after = await local.load();
+    expect(after?.moments ?? []).toHaveLength(0); // cloud rows were NOT resurrected onto the device
   });
 
   it('is non-destructive on push failure (local data survives, marked pending)', async () => {

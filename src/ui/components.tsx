@@ -60,11 +60,14 @@ export function Button({
   onPress,
   variant = 'primary',
   disabled = false,
+  selected,
 }: {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   disabled?: boolean;
+  /** When this button represents a choice in a group, expose the selected state to assistive tech. */
+  selected?: boolean;
 }) {
   const { colors } = useTheme();
   const bg =
@@ -74,7 +77,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled, selected }}
       onPress={disabled ? undefined : onPress}
       style={({ pressed }) => [
         styles.btn,
@@ -86,7 +89,18 @@ export function Button({
   );
 }
 
-export function Card({ children, onPress, selected = false }: { children: ReactNode; onPress?: () => void; selected?: boolean }) {
+export function Card({
+  children,
+  onPress,
+  selected = false,
+  expanded,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  selected?: boolean;
+  /** For a tappable card that toggles inline detail, expose the expanded state to assistive tech. */
+  expanded?: boolean;
+}) {
   const { colors } = useTheme();
   const content = (
     <View
@@ -100,7 +114,12 @@ export function Card({ children, onPress, selected = false }: { children: ReactN
   );
   if (!onPress) return content;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })} accessibilityRole="button">
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+    >
       {content}
     </Pressable>
   );

@@ -59,9 +59,10 @@ export default function DayMapScreen() {
           {/* Chronological segments; tap to reveal the routine detail inline */}
           {dayMap.segments.map((seg) => {
             const open = openId === seg.moment.id;
-            const chain = seg.edges.length > 0 ? seg.edges.map((e) => e.behavior).join('  →  ') : seg.moment.name;
+            const behaviors = seg.edges.map((e) => e.behavior).filter((bhv) => bhv.length > 0);
+            const chain = behaviors.length > 0 ? behaviors.join('  →  ') : seg.moment.name;
             return (
-              <Card key={seg.moment.id} onPress={() => setOpenId(open ? null : seg.moment.id)} selected={open}>
+              <Card key={seg.moment.id} onPress={() => setOpenId(open ? null : seg.moment.id)} selected={open} expanded={open}>
                 <Txt variant="label">{copy.dayPart[seg.dayPart]}</Txt>
                 <Txt variant="subtitle">{seg.moment.name}</Txt>
                 <Txt variant="body">{chain}</Txt>

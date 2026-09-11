@@ -166,8 +166,6 @@ export const tr = {
   'notif.quiet.enable': 'Sessiz aralığı aç',
   'notif.quiet.start': 'Başlangıç',
   'notif.quiet.end': 'Bitiş',
-  'notif.quiet.invalid': 'Bitiş saati başlangıçtan sonra olmalı.',
-  'notif.saved': 'Bildirim tercihlerin kaydedildi.',
 
   // Day map / full-day narration (F-002)
   'home.day.cta': 'Bugünkü döngüm',
@@ -374,8 +372,6 @@ export const en: Record<MessageKey, string> = {
   'notif.quiet.enable': 'Enable a quiet interval',
   'notif.quiet.start': 'Start',
   'notif.quiet.end': 'End',
-  'notif.quiet.invalid': 'The end time must be after the start.',
-  'notif.saved': 'Your notification preferences were saved.',
 
   'home.day.cta': 'My loop today',
   'daymap.title': 'My loop today',

@@ -57,3 +57,16 @@ export async function scheduleTransitionReminder(args: {
 export async function cancelReminder(id: string): Promise<void> {
   await Notifications.cancelScheduledNotificationAsync(id);
 }
+
+/**
+ * Cancel every pending proactive reminder. Called when the user tightens their notification
+ * preferences (budget → 0, or a quiet interval is set) so a previously-scheduled reminder cannot
+ * still fire against the new preference (F-013). Best-effort: never throws to the caller.
+ */
+export async function cancelAllReminders(): Promise<void> {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch {
+    // Notifications unavailable (no permission / platform) — nothing to cancel.
+  }
+}

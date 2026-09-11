@@ -55,6 +55,28 @@
     document is plaintext in AsyncStorage; move to encrypted storage (expo-secure-store + encrypted
     SQLite/MMKV) behind the Store port before real user data / beta. Deferred within the slice per
     the review; must land before Stage 14/15.
+- **Audit #2 (Stage 13, 2026-09-11): CONDITIONAL → resolved-in-scope.** Two independent reviewers
+  (security/privacy + QA) audited the Phase-4 breadth (SyncingStore, F-013, F-002). No P0; no P1 in the
+  QA scope. Actioned in this run:
+  - SEC P1-1 (local "delete account" resurrected by the next cloud pull because the session wasn't
+    ended) — FIXED: `deleteAllData` now ends the Supabase session (SyncingStore.signOut → gateway) and
+    cancels reminders before wiping; a store-level regression test proves a post-signOut sync SKIPS and
+    does not re-pull. (Full server-side cloud delete stays a pre-activation blocker, below.)
+  - QA P2-1 (notification prefs didn't cancel an already-scheduled reminder — "Off" could still fire) —
+    FIXED: `setNotificationBudget(0)` and setting a quiet interval now call `cancelAllReminders()`.
+  - QA P2-2 / P3-1 (quiet-interval UI desync; stale control on late profile load) — FIXED: the steppers
+    maintain a start<end invariant (no invalid state can persist) and the controls re-sync from the
+    persisted window via an effect.
+  - QA P3-2/P3-4 — FIXED: a11y `selected` (budget) + `expanded` (day-map card) state; removed unused
+    i18n keys; day-map behavior filter aligned with narration; doc nit.
+  - **Tracked as PRE-CLOUD-ACTIVATION / PRE-BETA blockers (latent — no auth/session wired yet; see
+    ADR-013):** SEC P1-1 full server-side cloud delete (Edge Function); SEC P2-1 Supabase session
+    token secure storage; SEC P2-2 explicit "cloud backup" consent + "what-leaves-the-device"
+    disclosure + field encryption before any auto-sync of special-category data; SEC P2-3 at-rest
+    encryption (already tracked); SEC P3-1 column-scoped `outcomes` SELECT (drop free_note from the
+    client read channel; needs explicit-column fetch); SEC P3-2 consent-withdrawal breaks the push
+    pipeline (skip capture-row re-push when consent is false); QA P3-3 userId normalization on merge.
+    Stage 13 PASS on the buildable scope; the tracked items gate cloud activation, not local use.
 - Blockers (real, external):
   - **Cloud sync activation — 2 minimal founder steps on the shared project (ADR-012):**
     1. Enable an auth method (e.g. anonymous sign-in) so a session / `auth.uid()` exists for RLS.

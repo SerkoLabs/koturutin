@@ -81,6 +81,20 @@ export class SyncingStore implements Store {
     return this.pending;
   }
 
+  /**
+   * End the remote session. Called by local account deletion so a subsequent sync() cannot re-pull
+   * the previous user's cloud rows back onto a freshly-wiped device (SEC audit P1-1). Best-effort:
+   * a failure (offline) never blocks the local delete.
+   */
+  async signOut(): Promise<void> {
+    try {
+      await this.gateway.signOut();
+    } catch {
+      // Offline / no client — the local wipe still proceeds; sync stays skipped without a session.
+    }
+    this.pending = false;
+  }
+
   // ---- reconciliation ----
   private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
     let lastErr: unknown;

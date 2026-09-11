@@ -16,6 +16,7 @@ import {
   getPriorityMoment,
   latestWho5,
   offerAttempt,
+  clampNotificationBudget,
   recordOutcome,
   respondToAttempt,
   selectExperiment,
@@ -35,7 +36,7 @@ import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Mom
 import { AsyncStorageStore } from '@/data/async-store';
 import { SyncingStore } from '@/data/syncing-store';
 import { SupabaseRemoteGateway } from '@/data/supabase/gateway';
-import { scheduleTransitionReminder } from '@/notifications';
+import { cancelAllReminders, scheduleTransitionReminder } from '@/notifications';
 import { detectLanguage, makeT, type TFunction } from '@/i18n';
 import { localDayOfWeek, localMinuteOfDay, newId, nowISO } from '@/lib/ids';
 
@@ -196,7 +197,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         return r;
       },
       deleteAllData: async () => {
+        // End the remote session FIRST so a later sync() cannot re-pull the previous user's cloud
+        // rows back onto this freshly-wiped device (SEC audit P1-1). Best-effort; local wipe proceeds
+        // regardless. (Full server-side cloud deletion is a pre-cloud-activation blocker — see docs.)
+        await store.signOut();
         await store.clear();
+        await cancelAllReminders();
         const fresh = createProfile(emptyAppData(), {
           id: newId(),
           language,
@@ -214,9 +220,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       setNotificationBudget: async (budget) => {
         await persist(setNotificationPrefs(data, { notificationBudget: budget }, nowISO()));
+        // Honor "Off" immediately: cancel any already-scheduled reminder so it can't still fire (P2-1).
+        if (clampNotificationBudget(budget) === 0) await cancelAllReminders();
       },
       setQuietWindows: async (windows) => {
         await persist(setNotificationPrefs(data, { quietWindows: windows }, nowISO()));
+        // A newly-set quiet interval must apply to already-scheduled reminders too (P2-1); the engine
+        // reschedules on the next experiment selection outside the window.
+        if (windows.length > 0) await cancelAllReminders();
       },
       addArrivingHomeMoment: async (input) => {
         const r = addConfirmedMoment(data, {

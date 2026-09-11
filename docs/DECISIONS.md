@@ -207,3 +207,26 @@ Record material product/architecture decisions. Do not log trivial code choices.
   so a session/`auth.uid()` exists; (2) add `koturutin` to PostgREST Exposed schemas.
 - Revisit trigger: if REST exposure is undesirable, move sync to an Edge Function; add soft-delete
   tombstone sync + a cloud-delete path before enabling bidirectional sync with real user data.
+
+### ADR-013 — Cloud-sync activation is gated behind explicit privacy prerequisites (Audit #2)
+- Status: Accepted
+- Date: 2026-09-11
+- Context: Audit #2 (Stage 13) confirmed the local-first + sync + notification + day-map work is sound
+  (no P0/P1 in local scope), but surfaced privacy obligations that must hold BEFORE the cloud path is
+  turned on. Today the path is latent (no auth method / sign-in is wired, so `sync()` always SKIPS).
+- Decision: the following are hard prerequisites before cloud sync may be activated (and are tracked
+  in docs/PROJECT_STATUS.md). None may be silently skipped:
+  1. **Server-side account/cloud deletion** (Edge Function) so "delete my account" removes cloud rows,
+     not just local. Interim mitigation already shipped: local delete ends the session so cloud rows
+     cannot be resurrected onto the device.
+  2. **Explicit "cloud backup" consent + a "what-leaves-the-device" disclosure**, and **field
+     encryption of synced special-category data** (spine §21). Auto-sync of mood/craving/routine/WHO-5
+     on mere session presence is NOT permitted without this.
+  3. **Secure storage** for the Supabase session tokens AND the local app document (expo-secure-store
+     / Keychain-Keystore + encrypted SQLite/MMKV) — MASVS-STORAGE-1.
+  4. **Consent-withdrawal-safe push** (don't re-push capture rows when consent_health_processing is
+     false) and **column-scoped `outcomes` SELECT** (keep free_note out of the client read channel too).
+- Consequences: the app stays fully usable and private locally now; cloud features light up only once
+  these gates are met. The founder's two dashboard steps (auth method + Exposed schemas) enable the
+  transport, but these privacy gates — not just the transport — decide when auto-sync is allowed on.
+- Revisit trigger: before wiring sign-in / enabling `sync()` for real users, or before Stage 14/15.

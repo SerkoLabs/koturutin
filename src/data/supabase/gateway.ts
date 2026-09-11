@@ -34,6 +34,9 @@ export interface RemoteGateway {
   upsert(table: SyncTable, rows: Row[], opts?: { insertOnly?: boolean }): Promise<void>;
   /** Fetch every row the caller may read from a koturutin table (their own rows, under RLS). */
   fetchAll(table: SyncTable): Promise<Row[]>;
+  /** End the current session so no further pull/push can act on the previous user's rows. Used by
+   *  local account deletion so cloud data cannot be resurrected onto a freshly-wiped device. */
+  signOut(): Promise<void>;
 }
 
 export class SupabaseRemoteGateway implements RemoteGateway {
@@ -62,5 +65,11 @@ export class SupabaseRemoteGateway implements RemoteGateway {
     const { data, error } = await sb.schema(KOTURUTIN_SCHEMA).from(table).select('*');
     if (error) throw new Error(`fetch ${table}: ${error.message}`);
     return (data ?? []) as Row[];
+  }
+
+  async signOut(): Promise<void> {
+    const sb = getSupabase();
+    if (!sb) return;
+    await sb.auth.signOut();
   }
 }
