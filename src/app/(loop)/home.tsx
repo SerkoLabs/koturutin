@@ -79,6 +79,9 @@ export default function Home() {
 
       <Spacer size={8} />
       <Txt center variant="muted">{t('app.tagline')}</Txt>
+      {priorityMoment ? (
+        <Button title={t('home.day.cta')} onPress={() => router.push('/day')} variant="ghost" />
+      ) : null}
       <Button title={t('home.week.cta')} onPress={() => router.push('/week')} variant="ghost" />
       <Button title={t('home.support.cta')} onPress={() => router.push('/safety')} variant="ghost" />
       <Button title={t('home.settings.cta')} onPress={() => router.push('/settings')} variant="ghost" />

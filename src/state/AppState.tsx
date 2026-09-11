@@ -26,6 +26,7 @@ import {
   type Result,
 } from '@/domain/model';
 import { countWeeklyConsciousTransitions } from '@/domain/northstar/northstar';
+import { buildDayMap, type DayMap } from '@/domain/daymap/daymap';
 import { buildWeeklySummary, type WeeklySummary } from '@/domain/summary/weekly';
 import { who5Score } from '@/domain/who5/who5';
 import { decideNotification } from '@/domain/decision-engine/engine';
@@ -56,6 +57,7 @@ interface AppStateValue {
   lastOutcome: Outcome | null;
   weeklyConsciousTransitions: number;
   weeklySummary: WeeklySummary;
+  dayMap: DayMap;
   observationCount: number;
   latestWho5Score: number | null;
   // actions
@@ -167,6 +169,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       lastOutcome,
       weeklyConsciousTransitions: countWeeklyConsciousTransitions(data.attempts, nowISO()),
       weeklySummary: buildWeeklySummary(data, nowISO()),
+      dayMap: buildDayMap(data),
       observationCount: countObservations(data),
       latestWho5Score: latestWho5(data)?.score ?? null,
 

@@ -22,11 +22,12 @@
     done and NOT fabricated; it remains required before beta (Stage 15). See docs/VALIDATION_PLAN.md.
 - Verification (this run):
   - `npm run typecheck` (tsc --noEmit): PASS.
-  - `npm test` (jest): PASS — 11 suites, 69 tests (decision engine, safety gate + crisis matcher,
+  - `npm test` (jest): PASS — 12 suites, 79 tests (decision engine, safety gate + crisis matcher,
     consent/age gate, North Star, WHO-5, weekly summary, app-data model, local-first persistence
-    round-trip, sync mapping/merge, SyncingStore reconciliation, **notification prefs + engine integration**).
+    round-trip, sync mapping/merge, SyncingStore reconciliation, notification prefs + engine
+    integration, **day-map projection + deterministic narration**).
   - `npm run lint` (expo lint): PASS.
-  - `npx expo export -p android`: PASS — bundles for Android (1392 modules) with the SyncingStore + F-013 screen.
+  - `npx expo export -p android`: PASS — bundles for Android (1394 modules) with SyncingStore + F-013 + F-002.
   - **Live Postgres (project hcbrunppfgakxxpyzbqn), 2026-09-10:** the permanent isolated `koturutin`
     schema migrations (0001/0002/0003) were APPLIED and a 12-point isolation + authorization matrix
     run via role impersonation — ALL PASS (see TASK-210 below); test rows cleaned up (zero residue).
@@ -122,7 +123,15 @@
   engine's inputs — daily proactive budget (0–2; "0" fully disables proactive nudges) and one
   same-day quiet interval — persisted to the profile and synced via the users row (src/app/(settings)/
   notifications.tsx + model.setNotificationPrefs + tests; engine-integration tests included).
-- F-002 full day narration — NEXT.
+- F-002 Full-day narration / day map (S-01→) — DONE locally: a DETERMINISTIC, LOCAL projection over
+  existing `moments`/`routine_edges`/`observations` (src/domain/daymap/daymap.ts — buildDayMap +
+  narrateDay, no LLM) rendered as a calm chronological chain with non-judgmental narration
+  (src/app/(loop)/day.tsx, guarded; Home CTA). **No DB migration and no new table** — the day map is a
+  pure projection of the single AppData document, so adding storage would duplicate the source of
+  truth and violate the "no parallel routine system" rule. 11 domain tests (empty/single/ordering/
+  grouping/missing-fields/deterministic/space-note/legacy-compatible/deleted-row handling).
+- NEXT (post-F-002): begin Audit #2 (Stage 13) on the Phase-4 breadth, or F-001 intent capture / the
+  pre-beta blockers (at-rest encryption; experiment_library clinical+cultural review).
 
 ## Quality commands
 
