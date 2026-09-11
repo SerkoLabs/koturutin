@@ -33,17 +33,26 @@ import { who5Score } from '@/domain/who5/who5';
 import { decideNotification } from '@/domain/decision-engine/engine';
 import type { RelationshipContextAnswer } from '@/domain/safety/safety';
 import type { AttemptResponse, Experiment, ExperimentLibraryEntry, Language, Moment, Outcome, QuietWindow } from '@/domain/types';
-import { AsyncStorageStore } from '@/data/async-store';
+import { EncryptedStore } from '@/data/encrypted-store';
+import { AsyncStorageKV } from '@/data/kv';
+import { SecureStoreKeyProvider } from '@/data/crypto/key-provider';
 import { SyncingStore } from '@/data/syncing-store';
 import { SupabaseRemoteGateway } from '@/data/supabase/gateway';
+import { getRandomBytes } from 'expo-crypto';
 import { cancelAllReminders, scheduleTransitionReminder } from '@/notifications';
 import { detectLanguage, makeT, type TFunction } from '@/i18n';
 import { localDayOfWeek, localMinuteOfDay, newId, nowISO } from '@/lib/ids';
 
-// Local-first: on-device storage is the primary source of truth. The SyncingStore wraps it and,
+// Local-first: on-device storage is the primary source of truth. The document is ENCRYPTED at rest
+// (EncryptedStore + OS-keystore key; MASVS-STORAGE-1). The SyncingStore wraps that local store and,
 // ONLY when a session + the isolated `koturutin` schema are available (founder prerequisites),
 // mirrors rows to Postgres under RLS. Until then sync() skips and behaviour is pure-local (ADR-004/012).
-const store = new SyncingStore(new AsyncStorageStore(), new SupabaseRemoteGateway());
+const localStore = new EncryptedStore(
+  new AsyncStorageKV(),
+  new SecureStoreKeyProvider(),
+  (n) => getRandomBytes(n),
+);
+const store = new SyncingStore(localStore, new SupabaseRemoteGateway());
 
 interface AppStateValue {
   loading: boolean;

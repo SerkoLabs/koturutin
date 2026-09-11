@@ -222,8 +222,11 @@ Record material product/architecture decisions. Do not log trivial code choices.
   2. **Explicit "cloud backup" consent + a "what-leaves-the-device" disclosure**, and **field
      encryption of synced special-category data** (spine §21). Auto-sync of mood/craving/routine/WHO-5
      on mere session presence is NOT permitted without this.
-  3. **Secure storage** for the Supabase session tokens AND the local app document (expo-secure-store
-     / Keychain-Keystore + encrypted SQLite/MMKV) — MASVS-STORAGE-1.
+  3. **Secure storage** for the Supabase session tokens AND the local app document — MASVS-STORAGE-1.
+     DONE (2026-09-11): both are authenticated-encrypted (tweetnacl secretbox) behind the Store /
+     auth-storage ports, with the 32-byte key in the OS keystore (expo-secure-store, device-only) via
+     expo-crypto's secure RNG; legacy plaintext is migrated then deleted. Residual: verify the native
+     Keychain/Keystore path on a real device (TASK-370).
   4. **Consent-withdrawal-safe push** (don't re-push capture rows when consent_health_processing is
      false) and **column-scoped `outcomes` SELECT** (keep free_note out of the client read channel too).
 - Consequences: the app stays fully usable and private locally now; cloud features light up only once

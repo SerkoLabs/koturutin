@@ -18,9 +18,12 @@
  * The service_role key is NEVER read here — it must stay in trusted Edge Functions only
  * (AGENTS.md §8). Only the anon key ships in the client, protected by database RLS, not secrecy.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getRandomBytes } from 'expo-crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '@/config/env';
+import { AsyncStorageKV } from '@/data/kv';
+import { EncryptedKV } from '@/data/crypto/encrypted-kv';
+import { SecureStoreKeyProvider } from '@/data/crypto/key-provider';
 
 /** The dedicated, isolated schema all koturutin data access is scoped to (ADR-012). */
 export const KOTURUTIN_SCHEMA = 'koturutin';
@@ -34,8 +37,10 @@ export function getSupabase(): SupabaseClient | null {
   if (!client) {
     client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
       auth: {
-        // Persist the session on-device so RLS has a stable auth.uid() across restarts.
-        storage: AsyncStorage,
+        // Persist the session on-device so RLS has a stable auth.uid() across restarts — but ENCRYPTED
+        // at rest (SEC audit P2-1): the access/refresh tokens are encrypted with the OS-keystore data
+        // key before touching AsyncStorage, never stored in the clear.
+        storage: new EncryptedKV(new AsyncStorageKV(), new SecureStoreKeyProvider(), (n) => getRandomBytes(n)),
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
