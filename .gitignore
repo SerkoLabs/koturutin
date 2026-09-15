@@ -32,6 +32,10 @@ yarn-error.*
 # local env files
 .env*.local
 
+# store release secrets (founder-provided; NEVER commit)
+google-service-account*.json
+*.keystore
+
 # typescript
 *.tsbuildinfo
 

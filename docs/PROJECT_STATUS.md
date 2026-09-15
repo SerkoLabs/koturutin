@@ -85,6 +85,17 @@
     (skip capture-row re-push when consent is false); QA P3-3 userId normalization on merge; and the
     device-only Keychain/Keystore verification of at-rest storage (TASK-370).
     Stage 13 PASS on the buildable scope; the tracked items gate cloud activation, not local use.
+- **Stage 14 (store/release readiness) — STARTED (2026-09-15).** In-repo prep DONE (no founder assets
+  needed): `eas.json` (dev/preview/production profiles; production=AAB; submit→**internal** track as a
+  **draft**), Android `versionCode`, secrets gitignored (service-account key / keystores), a bilingual
+  privacy-policy DRAFT (`docs/PRIVACY.md`), a Data-safety mapping + full checklist (`docs/RELEASE_READINESS.md`).
+  Verified against current sources (Sept 2026): new-app **target API 36** is met by Expo SDK 57 defaults;
+  koturutin needs the Play **Health apps declaration** + Data safety form + a hosted privacy policy.
+  **Recommendation: closed `internal` test track first, NOT production** — production is blocked by
+  (1) placeholder `experiment_library` content (both review flags false) and (2) validation (ADR-006).
+  First release can be **local-only (no login)**; Google/other auth is only for optional cloud sync,
+  which stays gated (ADR-013). FOUNDER-ONLY: Expo account + `EXPO_TOKEN`, Google Play account (US$25),
+  Play service-account key, store listing metadata, and completing the Play console forms.
 - Blockers (real, external):
   - **Cloud sync activation — 2 minimal founder steps on the shared project (ADR-012):**
     1. Enable an auth method (e.g. anonymous sign-in) so a session / `auth.uid()` exists for RLS.

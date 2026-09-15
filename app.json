@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.serkolabs.koturutin"
+      "package": "com.serkolabs.koturutin",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
