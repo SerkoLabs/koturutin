@@ -1,0 +1,1 @@
+Perform the audit required by the current lifecycle stage. Use the quality-audit workflow, compare implementation against approved requirements, classify findings P0-P3, provide evidence, and do not approve forward progress with unresolved P0/P1 findings.

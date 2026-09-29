@@ -1,0 +1,1 @@
+`AGENTS.md` is the canonical repository instruction file. Read it before planning or changing code. Follow `docs/AI_DEVELOPMENT_PLAYBOOK.md`, respect the current gate in `docs/PROJECT_STATUS.md`, and do not skip lifecycle stages. Use relevant skills under `.claude/skills/` instead of loading all skills at once.
