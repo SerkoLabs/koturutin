@@ -96,6 +96,15 @@
   First release can be **local-only (no login)**; Google/other auth is only for optional cloud sync,
   which stays gated (ADR-013). FOUNDER-ONLY: Expo account + `EXPO_TOKEN`, Google Play account (US$25),
   Play service-account key, store listing metadata, and completing the Play console forms.
+- **Stage 14 — EAS build/submit WIRED + first builds run (2026-09-16..29).** Founder connected Expo
+  (owner `serkandnc`, project `@serkandnc/kotu-rutin`, projectId in app.json) and linked the GitHub repo.
+  A production Android **AAB built successfully** on EAS (build `6072ef4f`, v1.0.0 vc2, SDK 57, STORE
+  distribution) from the feature branch — EAS auto-generated the signing keystore. Closed-test submit is
+  driven via EAS Submit → Google Play **`internal`** track as a **draft** (eas.json). An autoSubmit
+  build is used so the standard `eas submit` pipeline runs (the MCP one-shot submit hit an
+  exclusive-peers key conflict from the build commit's stale `serviceAccountKeyPath`, since removed).
+  Remaining founder items for the submit to land: the Play Console app must exist (package
+  `com.serkolabs.koturutin`) and the service-account key needs "Release to testing tracks" permission.
 - Blockers (real, external):
   - **Cloud sync activation — 2 minimal founder steps on the shared project (ADR-012):**
     1. Enable an auth method (e.g. anonymous sign-in) so a session / `auth.uid()` exists for RLS.
